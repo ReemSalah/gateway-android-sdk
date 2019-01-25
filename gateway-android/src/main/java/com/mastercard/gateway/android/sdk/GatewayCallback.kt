@@ -14,12 +14,22 @@
  * limitations under the License.
  */
 
-package com.mastercard.gateway.android.sdk;
+package com.mastercard.gateway.android.sdk
 
-import java.net.HttpURLConnection;
 
-interface Logger {
-    void logRequest(HttpURLConnection c, String data);
-    void logResponse(HttpURLConnection c, String data);
-    void logDebug(String message);
+interface GatewayCallback {
+
+    /**
+     * Callback on a successful call to the Gateway API
+     *
+     * @param response A response map
+     */
+    fun onSuccess(response: GatewayMap)
+
+    /**
+     * Callback executed when error thrown during call to Gateway API
+     *
+     * @param throwable The exception thrown
+     */
+    fun onError(throwable: Throwable)
 }

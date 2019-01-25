@@ -510,7 +510,7 @@ class Gateway {
                     Activity.RESULT_CANCELED -> callback.onGooglePayCancelled()
                     AutoResolveHelper.RESULT_ERROR -> {
                         val status = AutoResolveHelper.getStatusFromIntent(data)
-                        callback.onGooglePayError(status)
+                        callback.onGooglePayError(status!!)
                     }
                 }
 
