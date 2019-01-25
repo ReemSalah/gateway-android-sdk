@@ -14,34 +14,6 @@
  * limitations under the License.
  */
 
-package com.mastercard.gateway.android.sdk;
+package com.mastercard.gateway.android.sdk
 
-public class GatewayException extends Exception {
-
-    int statusCode;
-    GatewayMap error;
-
-    public GatewayException() {
-    }
-
-    public GatewayException(String message) {
-        super(message);
-    }
-
-
-    public int getStatusCode() {
-        return statusCode;
-    }
-
-    public void setStatusCode(int statusCode) {
-        this.statusCode = statusCode;
-    }
-
-    public GatewayMap getErrorResponse() {
-        return error;
-    }
-
-    public void setErrorResponse(GatewayMap error) {
-        this.error = error;
-    }
-}
+class GatewayException(message: String?, val statusCode: Int, val errorResponse: GatewayMap) : Exception(message)

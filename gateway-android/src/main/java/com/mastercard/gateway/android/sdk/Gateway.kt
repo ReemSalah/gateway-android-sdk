@@ -288,11 +288,7 @@ class Gateway {
             message = "An error occurred"
         }
 
-        val exception = GatewayException(message)
-        exception.setStatusCode(statusCode)
-        exception.errorResponse = response
-
-        throw exception
+        throw GatewayException(message, statusCode, response)
     }
 
     internal fun createSslContext(): SSLContext {
@@ -420,8 +416,8 @@ class Gateway {
         internal fun start3DSecureActivity(activity: Activity, html: String, title: String?, intent: Intent) {
             intent.putExtra(Gateway3DSecureActivity.EXTRA_HTML, html) // required
 
-            if (title != null) {
-                intent.putExtra(Gateway3DSecureActivity.EXTRA_TITLE, title)
+            title?.apply {
+                intent.putExtra(Gateway3DSecureActivity.EXTRA_TITLE, this)
             }
 
             activity.startActivityForResult(intent, REQUEST_3D_SECURE)
