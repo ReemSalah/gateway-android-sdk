@@ -63,6 +63,7 @@ dependencies {
 
     // required
     implementation "androidx.appcompat:appcompat:1.1.0-alpha01"
+    implementation "com.google.android.material:material:1.1.0-alpha02"
     implementation "com.google.code.gson:gson:$gsonVersion"
 
     // optional for rx java
@@ -84,7 +85,7 @@ dependencies {
 
 task dokkaJavadocs(type: org.jetbrains.dokka.gradle.DokkaTask) {
     outputFormat = 'javadoc'
-    outputDirectory = "$buildDir/javadoc"
+    outputDirectory = "${project.buildDir}/javadoc"
 }
 
 task dokkaJavadocsJar(type: Jar, dependsOn: dokkaJavadocs) {
