@@ -59,7 +59,7 @@ class MainActivity : AppCompatActivity() {
         Config.MERCHANT_URL.setValue(this, binding.merchantUrl.text!!.toString())
 
         // update api controller url
-        ApiController.getInstance().setMerchantServerUrl(Config.MERCHANT_URL.getValue(this))
+        ApiController.instance.setMerchantServerUrl(Config.MERCHANT_URL.getValue(this))
     }
 
     internal fun enableButtons() {

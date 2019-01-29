@@ -12,9 +12,9 @@ enum class Config constructor(internal var defValue: String) {
     REGION(Gateway.Region.NORTH_AMERICA.name),
     MERCHANT_URL("");
 
-    fun getValue(context: Context): String? {
+    fun getValue(context: Context): String {
         PreferenceManager.getDefaultSharedPreferences(context).apply {
-            return@getValue getString(name, defValue)
+            return@getValue getString(name, defValue)!!
         }
     }
 
