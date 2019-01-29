@@ -161,18 +161,18 @@ class Gateway {
     }
 
     internal fun buildUpdateSessionRequest(sessionId: String, apiVersion: String, payload: GatewayMap): GatewayRequest {
-        payload["device.browser"] = USER_AGENT
-
         val request = GatewayRequest(
                 url = getUpdateSessionUrl(sessionId, apiVersion),
                 method = GatewayRequest.Method.PUT,
-                payload = payload
+                payload = payload.apply {
+                    this["device.browser"] = USER_AGENT
+                }
         )
 
         // version 50 of the API dropped the requirement for the apiOperation parameter
         // 50+ uses the standard Update Session API
         if (Integer.parseInt(apiVersion) < 50) {
-            request.payload["apiOperation"] = API_OPERATION
+            request.payload["apiOperation"] = "UPDATE_PAYER_DATA"
         } else {
             // Auth header required for v50+
             request.headers["Authorization"] = createAuthHeader(sessionId)
@@ -181,6 +181,48 @@ class Gateway {
         return request
     }
 
+    fun initiateAuthentication(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap, callback: GatewayCallback) {
+        val request = buildInitiateAuthenticationRequest(sessionId, orderId, transactionId, apiVersion, payload)
+        runGatewayRequest(request, callback)
+    }
+
+    fun initiateAuthentication(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): Single<GatewayMap> {
+        val request = buildInitiateAuthenticationRequest(sessionId, orderId, transactionId, apiVersion, payload)
+        return runGatewayRequest(request)
+    }
+
+    internal fun buildInitiateAuthenticationRequest(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): GatewayRequest {
+        return buildAuthenticationRequest(sessionId, orderId, transactionId, apiVersion, payload).apply {
+            payload["apiOperation"] = "INITIATE_AUTHENTICATION"
+        }
+    }
+
+    fun authenticatePayer(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap, callback: GatewayCallback) {
+        val request = buildAuthenticatePayerRequest(sessionId, orderId, transactionId, apiVersion, payload)
+        runGatewayRequest(request, callback)
+    }
+
+    fun authenticatePayer(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): Single<GatewayMap> {
+        val request = buildAuthenticatePayerRequest(sessionId, orderId, transactionId, apiVersion, payload)
+        return runGatewayRequest(request)
+    }
+
+    internal fun buildAuthenticatePayerRequest(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): GatewayRequest {
+        return buildAuthenticationRequest(sessionId, orderId, transactionId, apiVersion, payload).apply {
+            payload["apiOperation"] = "AUTHENTICATE_PAYER"
+        }
+    }
+
+    internal fun buildAuthenticationRequest(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): GatewayRequest {
+        return GatewayRequest(
+                url = getAuthenticationUrl(orderId, transactionId, apiVersion),
+                method = GatewayRequest.Method.PUT,
+                payload = payload.apply {
+                    this["device.browser"] = USER_AGENT
+                },
+                headers = mutableMapOf("Authorization" to createAuthHeader(sessionId))
+        )
+    }
 
     internal fun getApiUrl(apiVersion: String): String {
         if (Integer.valueOf(apiVersion) < MIN_API_VERSION) {
@@ -191,19 +233,23 @@ class Gateway {
             throw IllegalStateException("You must initialize the the Gateway instance with a Region before use")
         }
 
-        return "https://" + region!!.prefix + "gateway.mastercard.com/api/rest/version/" + apiVersion
+        return "https://${region!!.prefix}gateway.mastercard.com/api/rest/version/$apiVersion"
     }
 
-    internal fun getUpdateSessionUrl(sessionId: String?, apiVersion: String): String {
-        if (sessionId == null) {
-            throw IllegalArgumentException("Session Id may not be null")
-        }
-
+    internal fun getUpdateSessionUrl(sessionId: String, apiVersion: String): String {
         if (merchantId == null) {
             throw IllegalStateException("You must initialize the the Gateway instance with a Merchant Id before use")
         }
 
-        return getApiUrl(apiVersion) + "/merchant/" + merchantId + "/session/" + sessionId
+        return getApiUrl(apiVersion) + "/merchant/$merchantId/session/$sessionId"
+    }
+
+    internal fun getAuthenticationUrl(orderId: String, transactionId: String, apiVersion: String): String {
+        if (merchantId == null) {
+            throw IllegalStateException("You must initialize the the Gateway instance with a Merchant Id before use")
+        }
+
+        return getApiUrl(apiVersion) + "/merchant/$merchantId/order/$orderId/transaction/$transactionId"
     }
 
     internal fun runGatewayRequest(request: GatewayRequest, callback: GatewayCallback) {
@@ -335,7 +381,7 @@ class Gateway {
         c.sslSocketFactory = context.socketFactory
         c.connectTimeout = CONNECTION_TIMEOUT
         c.readTimeout = READ_TIMEOUT
-        c.requestMethod = request.method!!.name
+        c.requestMethod = request.method.name
         c.doOutput = true
 
         c.setRequestProperty("User-Agent", USER_AGENT)
@@ -365,7 +411,6 @@ class Gateway {
         const val READ_TIMEOUT = 60000
         const val REQUEST_3D_SECURE = 10000
         const val REQUEST_GOOGLE_PAY_LOAD_PAYMENT_DATA = 10001
-        const val API_OPERATION = "UPDATE_PAYER_DATA"
         const val USER_AGENT = "Gateway-Android-SDK/" + BuildConfig.VERSION_NAME
         const val INTERMEDIATE_CA = "-----BEGIN CERTIFICATE-----\n" +
                 "MIIFAzCCA+ugAwIBAgIEUdNg7jANBgkqhkiG9w0BAQsFADCBvjELMAkGA1UEBhMC\n" +

@@ -82,22 +82,6 @@ dependencies {
     testImplementation "com.nhaarman:mockito-kotlin-kt1.1:$mockitoKotlinVersion"
 }
 
-//task androidJavadocs(type: Javadoc) {
-//    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-//    android.libraryVariants.all { variant ->
-//        if (variant.name == 'release') {
-//            owner.classpath += variant.javaCompile.classpath
-//        }
-//    }
-//    source = android.sourceSets.main.java.srcDirs
-//    exclude '**/R.html', '**/R.*.html', '**/index.html'
-//}
-//
-//task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
-//    classifier = 'javadoc'
-//    from androidJavadocs.destinationDir
-//}
-
 task dokkaJavadocs(type: org.jetbrains.dokka.gradle.DokkaTask) {
     outputFormat = 'javadoc'
     outputDirectory = "$buildDir/javadoc"

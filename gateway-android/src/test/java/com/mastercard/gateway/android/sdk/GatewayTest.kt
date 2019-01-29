@@ -71,7 +71,7 @@ class GatewayTest {
 
         assertTrue(request.payload.containsKey("device.browser"))
         assertTrue(request.payload.containsKey("apiOperation"))
-        assertEquals(Gateway.API_OPERATION, request.payload["apiOperation"])
+        assertEquals("UPDATE_PAYER_DATA", request.payload["apiOperation"])
         assertEquals(Gateway.USER_AGENT, request.payload["device.browser"])
     }
 
@@ -97,6 +97,68 @@ class GatewayTest {
 
         assertTrue(request.headers.containsKey("Authorization"))
         assertEquals(expectedAuthHeader, request.headers["Authorization"])
+    }
+
+    @Test
+    fun testBuildAuthenticationRequestWorksAsExpected() {
+        gateway.merchantId = "MERCHANT_ID"
+        gateway.region = Gateway.Region.MTF
+
+        val sessionId = "somesession"
+        val apiVersion = "51"
+        val payload = GatewayMap()
+        val orderId = "someorder"
+        val txnId = "sometxn"
+
+        val expectedUrl = "https://test-gateway.mastercard.com/api/rest/version/$apiVersion/merchant/${gateway.merchantId}/order/$orderId/transaction/$txnId"
+        val expectedAuthHeader = "Basic bWVyY2hhbnQuTUVSQ0hBTlRfSUQ6c29tZXNlc3Npb24="
+
+        val request = gateway.buildAuthenticationRequest(sessionId, orderId, txnId, apiVersion, payload)
+
+        assertEquals(expectedUrl, request.url)
+        assertEquals(GatewayRequest.Method.PUT, request.method)
+        assertTrue(request.payload.containsKey("device.browser"))
+        assertEquals(Gateway.USER_AGENT, request.payload["device.browser"])
+        assertTrue(request.headers.containsKey("Authorization"))
+        assertEquals(expectedAuthHeader, request.headers["Authorization"])
+    }
+
+    @Test
+    fun testBuildInitiateAuthenticationRequestAddsApiOperation() {
+        gateway.merchantId = "MERCHANT_ID"
+        gateway.region = Gateway.Region.MTF
+
+        val sessionId = "somesession"
+        val apiVersion = "51"
+        val payload = GatewayMap()
+        val orderId = "someorder"
+        val txnId = "sometxn"
+
+        val expectedApiOperation = "INITIATE_AUTHENTICATION"
+
+        val request = gateway.buildInitiateAuthenticationRequest(sessionId, orderId, txnId, apiVersion, payload)
+
+        assertTrue(request.payload.containsKey("apiOperation"))
+        assertEquals(expectedApiOperation, request.payload["apiOperation"])
+    }
+
+    @Test
+    fun testBuildAuthenticatePayerRequestAddsApiOperation() {
+        gateway.merchantId = "MERCHANT_ID"
+        gateway.region = Gateway.Region.MTF
+
+        val sessionId = "somesession"
+        val apiVersion = "51"
+        val payload = GatewayMap()
+        val orderId = "someorder"
+        val txnId = "sometxn"
+
+        val expectedApiOperation = "AUTHENTICATE_PAYER"
+
+        val request = gateway.buildAuthenticatePayerRequest(sessionId, orderId, txnId, apiVersion, payload)
+
+        assertTrue(request.payload.containsKey("apiOperation"))
+        assertEquals(expectedApiOperation, request.payload["apiOperation"])
     }
 
     @Test
@@ -162,10 +224,10 @@ class GatewayTest {
         val acsResultJson = "{\"foo\":\"bar\"}"
 
         val callback = spy(object : Gateway3DSecureCallback {
-            override fun on3DSecureComplete(response: GatewayMap) {
-                assertNotNull(response)
-                assertTrue(response.containsKey("foo"))
-                assertEquals("bar", response["foo"])
+            override fun on3DSecureComplete(acsResult: GatewayMap) {
+                assertNotNull(acsResult)
+                assertTrue(acsResult.containsKey("foo"))
+                assertEquals("bar", acsResult["foo"])
             }
 
             override fun on3DSecureCancel() {
@@ -289,19 +351,6 @@ class GatewayTest {
 
         assertEquals(expectedUrl, gateway.getApiUrl(Gateway.MIN_API_VERSION.toString()))
     }
-
-    @Test
-    fun testGetUpdateSessionUrlThrowsExceptionIfSessionIdIsNull() {
-        try {
-            gateway.getUpdateSessionUrl(null, Gateway.MIN_API_VERSION.toString())
-
-            fail("Null session id should throw illegal argument exception")
-        } catch (e: Exception) {
-            assertTrue(e is IllegalArgumentException)
-        }
-
-    }
-
 
     @Test
     fun testGetUpdateSessionUrlThrowsExceptionIfMerchantIdIsNull() {
