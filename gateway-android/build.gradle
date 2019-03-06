@@ -45,42 +45,31 @@ configurations {
     implementation.extendsFrom optional
 }
 
-ext {
-    gsonVersion = '2.8.2'
-    rxJavaVersion = '2.2.5'
-    playServicesWalletVersion = '16.0.1'
-
-    jUnitVersion = '4.12'
-    robolectricVersion = '4.1'
-    mockitoVersion = '2.23.4'
-    mockitoKotlinVersion = '1.5.0'
-}
-
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
 
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
     // required
-    implementation "androidx.appcompat:appcompat:1.1.0-alpha01"
-    implementation "com.google.android.material:material:1.1.0-alpha02"
-    implementation "com.google.code.gson:gson:$gsonVersion"
+    implementation 'androidx.appcompat:appcompat:1.1.0-alpha02'
+    implementation 'com.google.android.material:material:1.1.0-alpha04'
+    implementation 'com.google.code.gson:gson:2.8.2'
 
     // optional for rx java
-    optional "io.reactivex.rxjava2:rxjava:$rxJavaVersion"
+    optional 'io.reactivex.rxjava2:rxjava:2.2.5'
 
     // optional for google pay
-    optional "androidx.legacy:legacy-support-v4:1.0.0"
-    optional "com.google.android.gms:play-services-wallet:$playServicesWalletVersion"
+    optional 'androidx.legacy:legacy-support-v4:1.0.0'
+    optional 'com.google.android.gms:play-services-wallet:16.0.1'
 
-    compileOnly "androidx.annotation:annotation:1.0.1"
+    compileOnly 'androidx.annotation:annotation:1.0.2'
 
-    testImplementation "junit:junit:$jUnitVersion"
-    testImplementation "org.robolectric:robolectric:$robolectricVersion"
-    testImplementation "org.mockito:mockito-core:$mockitoVersion"
-    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion"
-    testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlinVersion"
-    testImplementation "com.nhaarman:mockito-kotlin-kt1.1:$mockitoKotlinVersion"
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'org.robolectric:robolectric:4.1'
+    testImplementation 'org.mockito:mockito-core:2.23.4'
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+    testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+    testImplementation 'com.nhaarman:mockito-kotlin-kt1.1:1.5.0'
 }
 
 task dokkaJavadocs(type: org.jetbrains.dokka.gradle.DokkaTask) {

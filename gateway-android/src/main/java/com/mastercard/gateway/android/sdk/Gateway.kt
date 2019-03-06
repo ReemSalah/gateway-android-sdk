@@ -48,18 +48,12 @@ import io.reactivex.Single
 /**
  * The public interface to the Gateway SDK.
  *
- *
  * Example set up:
  *
- *
- * `
- * Gateway gateway = new Gateway();
+ * `Gateway gateway = new Gateway();
  * gateway.setMerchantId("your-merchant-id");
- * gateway.setRegion(Gateway.Region.NORTH_AMERICA);
-` *
- */
-/**
- * Constructs a new instance.
+ * gateway.setRegion(Gateway.Region.NORTH_AMERICA);`
+ *
  */
 class Gateway {
 
@@ -71,7 +65,7 @@ class Gateway {
     /**
      * The available gateway regions
      */
-    enum class Region private constructor(internal var prefix: String) {
+    enum class Region constructor(internal var prefix: String) {
         ASIA_PACIFIC("ap-"),
         EUROPE("eu-"),
         NORTH_AMERICA("na-"),
@@ -181,11 +175,17 @@ class Gateway {
         return request
     }
 
+    /**
+     *
+     */
     fun initiateAuthentication(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap, callback: GatewayCallback) {
         val request = buildInitiateAuthenticationRequest(sessionId, orderId, transactionId, apiVersion, payload)
         runGatewayRequest(request, callback)
     }
 
+    /**
+     *
+     */
     fun initiateAuthentication(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): Single<GatewayMap> {
         val request = buildInitiateAuthenticationRequest(sessionId, orderId, transactionId, apiVersion, payload)
         return runGatewayRequest(request)
@@ -197,11 +197,17 @@ class Gateway {
         }
     }
 
+    /**
+     *
+     */
     fun authenticatePayer(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap, callback: GatewayCallback) {
         val request = buildAuthenticatePayerRequest(sessionId, orderId, transactionId, apiVersion, payload)
         runGatewayRequest(request, callback)
     }
 
+    /**
+     *
+     */
     fun authenticatePayer(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): Single<GatewayMap> {
         val request = buildAuthenticatePayerRequest(sessionId, orderId, transactionId, apiVersion, payload)
         return runGatewayRequest(request)
