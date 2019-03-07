@@ -61,6 +61,7 @@ dependencies {
     implementation 'blue.aodev:material-values:1.1.1'
 
     implementation project(':gateway-android')
+    implementation project(':gateway3ds2android')
 
     // Espresso testing
     androidTestImplementation 'junit:junit:4.12'
@@ -70,4 +71,5 @@ dependencies {
     androidTestImplementation('androidx.test:runner:1.1.0-alpha4') {
         exclude module: 'support-annotations'
     }
+
 }
