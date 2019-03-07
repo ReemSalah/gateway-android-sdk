@@ -2,18 +2,34 @@ package com.mastercard.gateway.threeds2
 
 import android.content.Context
 
-class Mock3DS2Service : ThreeDS2Service {
+class Mock3DS2Service(val callback: Callback) : ThreeDS2Service {
+
+    companion object {
+        const val SDK_REF_NUMBER = "1234567890"
+    }
+
+    interface Callback {
+        fun initializeComplete()
+        fun initializeError()
+    }
 
     var initialized: Boolean = false
-        internal set
+        private set
+
+    var deviceData: String? = null
+        private set
+
+    internal val warnings = ArrayList<Warning>()
 
     override fun initialize(applicationContext: Context, configParameters: ConfigParameters, locale: String?, uiCustomization: UiCustomization?) {
         if (initialized) throw SDKAlreadyInitializedException("SDK already initialized")
-        // TODO start a background thread to initialize
 
-        // TODO callback method execution
-
+        // ... start a background thread to initialize ...
         initialized = true
+        deviceData = "here is some device data"
+
+        // callback method execution
+        callback.initializeComplete()
     }
 
     override fun createTransaction(directoryServerID: String, messageVersion: String?): Transaction {
@@ -23,14 +39,15 @@ class Mock3DS2Service : ThreeDS2Service {
     }
 
     override fun cleanup() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        deviceData = null
+        initialized = false
     }
 
     override fun getSDKVersion(): String {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return BuildConfig.VERSION_NAME
     }
 
     override fun getWarnings(): List<Warning> {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return warnings
     }
 }
