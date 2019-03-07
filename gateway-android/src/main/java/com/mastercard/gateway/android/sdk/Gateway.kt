@@ -224,6 +224,7 @@ class Gateway {
                 url = getAuthenticationUrl(orderId, transactionId, apiVersion),
                 method = GatewayRequest.Method.PUT,
                 payload = payload.apply {
+                    this["session.id"] = sessionId
                     this["device.browser"] = USER_AGENT
                 },
                 headers = mutableMapOf("Authorization" to createAuthHeader(sessionId))
