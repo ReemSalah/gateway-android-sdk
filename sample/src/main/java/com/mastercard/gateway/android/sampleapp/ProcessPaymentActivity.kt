@@ -379,8 +379,6 @@ class ProcessPaymentActivity : AppCompatActivity() {
     }
 
     private fun handle3DS1Response(response: GatewayMap) {
-        val threeDSecureId = response["gatewayResponse.3DSecureID"] as String?
-
         var html: String? = null
         if (response.containsKey("authentication.redirectHtml")) {
             html = response["authentication.redirectHtml"] as String?
