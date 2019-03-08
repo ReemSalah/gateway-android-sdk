@@ -10,7 +10,7 @@ class MockTransaction : Transaction {
     }
 
     override fun doChallenge(currentActivity: Activity, challengeParameters: ChallengeParameters, challengeStatusReceiver: ChallengeStatusReceiver, timeOut: Int) {
-        val intent = Intent()
+        val intent = Intent(currentActivity, ChallengeActivity::class.java)
         intent.putExtra(ChallengeActivity.EXTRA_RECEIVER, challengeStatusReceiver)
         currentActivity.startActivity(intent)
     }
