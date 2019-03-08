@@ -386,7 +386,7 @@ class ProcessPaymentActivity : AppCompatActivity() {
             html = response["authentication.redirectHtml"] as String?
         }
 
-        val gatewayRecommendation = response["response.gatewayRecommendation "] as String?
+        val gatewayRecommendation = response["response.gatewayRecommendation"] as String?
 
         // if DO_NOT_PROCEED returned in recommendation, should stop transaction
         if ("DO_NOT_PROCEED".equals(gatewayRecommendation!!, ignoreCase = true)) {
