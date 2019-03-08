@@ -1,6 +1,7 @@
 package com.mastercard.gateway.threeds2
 
 import android.app.Activity
+import android.content.Intent
 
 class MockTransaction : Transaction {
 
@@ -9,8 +10,9 @@ class MockTransaction : Transaction {
     }
 
     override fun doChallenge(currentActivity: Activity, challengeParameters: ChallengeParameters, challengeStatusReceiver: ChallengeStatusReceiver, timeOut: Int) {
-        // turn around callback complete method (don't mock UI)
-        challengeStatusReceiver.completed(CompletionEvent("transaction id", "transaction status"))
+        val intent = Intent()
+        intent.putExtra(ChallengeActivity.EXTRA_RECEIVER, challengeStatusReceiver)
+        currentActivity.startActivity(intent)
     }
 
     override fun getProgressView(currentActivity: Activity): ProgressView {

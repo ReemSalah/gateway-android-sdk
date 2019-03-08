@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Gateway 3DS2 Android</string>
+
+    <string name="challenge_title">Challenge Simulator</string>
+    <string name="challenge_completion_status">Completion Status</string>
+    <string name="challenge_complete">Complete</string>
 </resources>
