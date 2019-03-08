@@ -386,22 +386,22 @@ class ProcessPaymentActivity : AppCompatActivity() {
 
         val gatewayRecommendation = response["response.gatewayRecommendation"] as String?
 
-        // if DO_NOT_PROCEED returned in recommendation, should stop transaction
-        if ("DO_NOT_PROCEED".equals(gatewayRecommendation!!, ignoreCase = true)) {
-            binding.check3dsProgress.visibility = View.GONE
-            binding.check3dsError.visibility = View.VISIBLE
+        when(gatewayRecommendation) {
+            "DO_NOT_PROCEED" -> {
+                // if DO_NOT_PROCEED returned in recommendation, should stop transaction
+                binding.check3dsProgress.visibility = View.GONE
+                binding.check3dsError.visibility = View.VISIBLE
 
-            showResult(R.drawable.failed, R.string.pay_error_3ds_authentication_failed)
-            return
+                showResult(R.drawable.failed, R.string.pay_error_3ds_authentication_failed)
+                return
+            }
+            "PROCEED_WITH_AUTHENTICATION" -> {
+                // if PROCEED returned in recommendation, start 3DS 1.0
+                Gateway.start3DSecureActivity(this@ProcessPaymentActivity, html!!)
+                return
+            }
+            else -> processPayment()
         }
-
-        // if PROCEED in recommendation, and we have HTML for 3ds, perform 3DS
-        if (html != null) {
-            Gateway.start3DSecureActivity(this@ProcessPaymentActivity, html)
-            return
-        }
-
-        processPayment()
     }
 
     private fun handle3DS2Response(response: GatewayMap) {
