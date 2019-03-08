@@ -118,7 +118,7 @@ class ApiController private constructor() {
         }.start()
     }
 
-    fun completeSession(sessionId: String, orderId: String, transactionId: String, amount: String, currency: String, threeDSecureId: String?, isGooglePay: Boolean?, callback: CompleteSessionCallback?) {
+    fun completeSession(sessionId: String, orderId: String, transactionId: String, amount: String, currency: String, threeDSecureTwoId: String?, threeDSecureTwoStatus: String?, isGooglePay: Boolean?, callback: CompleteSessionCallback?) {
         val handler = Handler { message ->
             if (callback != null) {
                 if (message.obj is Throwable) {
@@ -133,7 +133,7 @@ class ApiController private constructor() {
         Thread {
             val m = handler.obtainMessage()
             try {
-                m.obj = executeCompleteSession(sessionId, orderId, transactionId, amount, currency, threeDSecureId, isGooglePay)
+                m.obj = executeCompleteSession(sessionId, orderId, transactionId, amount, currency, threeDSecureTwoId, threeDSecureTwoStatus, isGooglePay)
             } catch (e: Exception) {
                 m.obj = e
             }
@@ -191,7 +191,7 @@ class ApiController private constructor() {
     }
 
     @Throws(Exception::class)
-    internal fun executeCompleteSession(sessionId: String, orderId: String, transactionId: String, amount: String, currency: String, threeDSecureId: String?, isGooglePay: Boolean?): String {
+    internal fun executeCompleteSession(sessionId: String, orderId: String, transactionId: String, amount: String, currency: String, threeDSecureTwoId: String?, threeDSecureTwoStatus: String?, isGooglePay: Boolean?): String {
         val request = GatewayMap()
                 .set("apiOperation", "PAY")
                 .set("session.id", sessionId)
@@ -201,8 +201,9 @@ class ApiController private constructor() {
                 .set("transaction.source", "INTERNET")
                 .set("transaction.frequency", "SINGLE")
 
-        if (threeDSecureId != null) {
-            request["3DSecureId"] = threeDSecureId
+        if  (threeDSecureTwoId != null) {
+            request["authentication.3ds2.dsTransactionId"] = threeDSecureTwoId
+            request["authentication.3ds2.transactionStatus"] = threeDSecureTwoStatus
         }
 
         if (isGooglePay!!) {
