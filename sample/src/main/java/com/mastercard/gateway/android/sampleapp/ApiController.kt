@@ -37,6 +37,7 @@ import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 
 import android.text.TextUtils.isEmpty
+import com.google.gson.Gson
 
 /**
  * ApiController object used to send create and update session requests. Conforms to the singleton
@@ -49,6 +50,12 @@ class ApiController private constructor() {
 
     interface CreateSessionCallback {
         fun onSuccess(sessionId: String, apiVersion: String)
+
+        fun onError(throwable: Throwable)
+    }
+
+    interface UpdateSessionCallback {
+        fun onSuccess(result: String)
 
         fun onError(throwable: Throwable)
     }
@@ -86,6 +93,30 @@ class ApiController private constructor() {
             val m = handler.obtainMessage()
             try {
                 m.obj = executeCreateSession()
+            } catch (e: Exception) {
+                m.obj = e
+            }
+
+            handler.sendMessage(m)
+        }.start()
+    }
+
+    fun updateSessionWithOrderDetails(sessionId: String, orderId: String, currencyCode: String, callback: UpdateSessionCallback?) {
+        val handler = Handler { message ->
+            if (callback != null) {
+                if (message.obj is Throwable) {
+                    callback.onError(message.obj as Throwable)
+                } else {
+                    callback.onSuccess(message.obj as String)
+                }
+            }
+            true
+        }
+
+        Thread {
+            val m = handler.obtainMessage()
+            try {
+                m.obj = executeUpdateSession(sessionId, orderId, currencyCode)
             } catch (e: Exception) {
                 m.obj = e
             }
@@ -161,6 +192,30 @@ class ApiController private constructor() {
         Log.i("createSession", "Created session with ID $sessionId with API version $apiVersion")
 
         return Pair<String, String>(sessionId, apiVersion)
+    }
+
+    @Throws(Exception::class)
+    internal fun executeUpdateSession(sessionId: String, orderId: String, currencyCode: String): String {
+        val request = GatewayMap()
+                .set("order.id", orderId)
+                .set("order.currency", currencyCode)
+
+        val jsonRequest = GSON.toJson(request)
+
+        val jsonResponse = doJsonRequest(URL("$merchantServerUrl/session.php?session=$sessionId"), jsonRequest, "PUT", null, null, HttpsURLConnection.HTTP_OK)
+
+        val response = GatewayMap(jsonResponse)
+
+        if (!response.containsKey("gatewayResponse")) {
+            throw RuntimeException("Could not read gateway response")
+        }
+
+        // if there is an error result, throw it
+        if (response.containsKey("gatewayResponse.session.updateStatus") && "FAILURE".equals((response["gatewayResponse.session.updateStatus"] as String?)!!, ignoreCase = true)) {
+            throw RuntimeException("Update Session Error: The last attempt to place data into the session was unsuccessful. The session may contain invalid data. A request operation using this session will be rejected by the payment gateway.")
+        }
+
+        return response["gatewayResponse.session.updateStatus"] as String
     }
 
     @Throws(Exception::class)

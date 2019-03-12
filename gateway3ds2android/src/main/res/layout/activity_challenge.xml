@@ -76,6 +76,106 @@
             app:layout_constraintStart_toEndOf="@+id/guideline_start"
             app:layout_constraintTop_toBottomOf="@+id/button_complete" />
 
+        <Button
+            android:id="@+id/button_timeout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/challenge_timeout"
+            app:layout_constraintEnd_toStartOf="@+id/guideline_end"
+            app:layout_constraintStart_toEndOf="@+id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@+id/divider1" />
+
+        <View
+            android:id="@+id/divider2"
+            android:layout_width="0dp"
+            android:layout_height="2dp"
+            android:layout_marginTop="16dp"
+            android:background="?android:attr/listDivider"
+            app:layout_constraintEnd_toStartOf="@+id/guideline_end"
+            app:layout_constraintStart_toEndOf="@+id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@+id/button_timeout" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_protocol_error_message"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:layout_constraintEnd_toStartOf="@+id/guideline_end"
+            app:layout_constraintStart_toEndOf="@+id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@+id/divider2">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/text_protocol_error_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/challenge_protocol_error_message" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/button_protocol_error"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/challenge_protocol_error"
+            app:layout_constraintEnd_toStartOf="@+id/guideline_end"
+            app:layout_constraintStart_toEndOf="@+id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@+id/til_protocol_error_message" />
+
+        <View
+            android:id="@+id/divider3"
+            android:layout_width="0dp"
+            android:layout_height="2dp"
+            android:layout_marginTop="16dp"
+            android:background="?android:attr/listDivider"
+            app:layout_constraintEnd_toStartOf="@+id/guideline_end"
+            app:layout_constraintStart_toEndOf="@+id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@+id/button_protocol_error" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_runtime_error_message"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:layout_constraintEnd_toStartOf="@+id/guideline_end"
+            app:layout_constraintStart_toEndOf="@+id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@+id/divider3">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/text_runtime_error_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/challenge_runtime_error_message" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_runtime_error_code"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            app:layout_constraintEnd_toStartOf="@+id/guideline_end"
+            app:layout_constraintStart_toEndOf="@+id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@+id/til_runtime_error_message">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/text_runtime_error_code"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="@string/challenge_runtime_error_code" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/button_runtime_error"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/challenge_runtime_error"
+            app:layout_constraintEnd_toStartOf="@+id/guideline_end"
+            app:layout_constraintStart_toEndOf="@+id/guideline_start"
+            app:layout_constraintTop_toBottomOf="@+id/til_runtime_error_code" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

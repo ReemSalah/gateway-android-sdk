@@ -171,6 +171,10 @@ class ProcessPaymentActivity : AppCompatActivity() {
         apiController.createSession(CreateSessionCallback())
     }
 
+    internal fun addCurrencyToSession() {
+        apiController.updateSessionWithOrderDetails(sessionId, orderId, CURRENCY, AddCurrencyCodeToSessionCallback())
+    }
+
     internal fun collectCardInfo() {
         binding.collectCardInfoProgress.visibility = View.VISIBLE
 
@@ -210,7 +214,7 @@ class ProcessPaymentActivity : AppCompatActivity() {
 
         // build the gateway request
         val request = GatewayMap()
-                .set("order.currency", CURRENCY)
+//                .set("order.currency", CURRENCY)
 
         gateway.initiateAuthentication(sessionId, orderId, transactionId, apiVersion, request, InitiateAuthenticationCallback())
     }
@@ -233,11 +237,28 @@ class ProcessPaymentActivity : AppCompatActivity() {
     internal inner class CreateSessionCallback : ApiController.CreateSessionCallback {
         override fun onSuccess(sessionId: String, apiVersion: String) {
             Log.i("CreateSessionTask", "Session established")
-            binding.createSessionProgress.visibility = View.GONE
-            binding.createSessionSuccess.visibility = View.VISIBLE
 
             this@ProcessPaymentActivity.sessionId = sessionId
             this@ProcessPaymentActivity.apiVersion = apiVersion
+
+            addCurrencyToSession()
+        }
+
+        override fun onError(throwable: Throwable) {
+            Log.e(TAG, throwable.message, throwable)
+
+            binding.createSessionProgress.visibility = View.GONE
+            binding.createSessionError.visibility = View.VISIBLE
+
+            showResult(R.drawable.failed, R.string.pay_error_unable_to_create_session)
+        }
+    }
+
+    internal inner class AddCurrencyCodeToSessionCallback : ApiController.UpdateSessionCallback {
+        override fun onSuccess(result: String) {
+            Log.i("UpdateSessionTask", "Currency code added to session")
+            binding.createSessionProgress.visibility = View.GONE
+            binding.createSessionSuccess.visibility = View.VISIBLE
 
             collectCardInfo()
         }
@@ -248,7 +269,7 @@ class ProcessPaymentActivity : AppCompatActivity() {
             binding.createSessionProgress.visibility = View.GONE
             binding.createSessionError.visibility = View.VISIBLE
 
-            showResult(R.drawable.failed, R.string.pay_error_unable_to_create_session)
+            showResult(R.drawable.failed, R.string.pay_error_unable_to_add_currency_code_to_session)
         }
     }
 
@@ -474,7 +495,7 @@ class ProcessPaymentActivity : AppCompatActivity() {
         }
 
         override fun initializeError(e: java.lang.Exception) {
-            Log.e(TAG, "An error occured initializing 3DS2", e)
+            Log.e(TAG, "An error occurred initializing 3DS2", e)
         }
     }
 

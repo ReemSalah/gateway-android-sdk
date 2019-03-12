@@ -225,7 +225,7 @@ class Gateway {
                 method = GatewayRequest.Method.PUT,
                 payload = payload.apply {
                     this["session.id"] = sessionId
-                    this["device.browser"] = USER_AGENT
+//                    this["device.browser"] = USER_AGENT
                 },
                 headers = mutableMapOf("Authorization" to createAuthHeader(sessionId))
         )
