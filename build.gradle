@@ -2,12 +2,18 @@ buildscript {
     ext.kotlin_version = '1.3.21'
 
     repositories {
+
+        // corp jcenter proxy
+        maven {
+            url 'https://artifacts.mastercard.int/artifactory/maven-all'
+        }
+
         jcenter()
         google()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.3.1'
+        classpath 'com.android.tools.build:gradle:3.3.2'
         classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.7.5'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
         classpath 'org.jetbrains.dokka:dokka-android-gradle-plugin:0.9.17'
@@ -17,6 +23,12 @@ buildscript {
 
 allprojects {
     repositories {
+
+        // corp jcenter proxy
+        maven {
+            url 'https://artifacts.mastercard.int/artifactory/maven-all'
+        }
+
         jcenter()
         google()
     }
@@ -27,5 +39,5 @@ task clean(type: Delete) {
 }
 
 ext {
-    libraryVersionName = '1.2.0-SNAPSHOT'
+    libraryVersionName = '1.2.0-SNAPSHOT-3DS'
 }
