@@ -41,7 +41,8 @@ import org.json.JSONObject
  */
 class Gateway {
 
-    @JvmField internal var comms = GatewayComms()
+    @JvmField
+    internal var comms = GatewayComms()
 
     var merchantId: String? = null
     var region: Region? = null
@@ -64,10 +65,10 @@ class Gateway {
      * This will execute the necessary network request on a background thread
      * and return the response (or error) to the provided callback.
      *
-     * @param sessionId  A session ID from the Mastercard Gateway
+     * @param sessionId A session ID from the Mastercard Gateway
      * @param apiVersion The API version number used when the session was created
-     * @param payload    A map of the request data
-     * @param callback   A callback to handle success and error messages
+     * @param payload A map of the request data
+     * @param callback A callback to handle success and error messages
      */
     fun updateSession(sessionId: String, apiVersion: String, payload: GatewayMap, callback: GatewayCallback) {
         val request = buildUpdateSessionRequest(sessionId, apiVersion, payload)
@@ -81,9 +82,9 @@ class Gateway {
      *
      * Does not adhere to any particular scheduler
      *
-     * @param sessionId  A session ID from the Mastercard Gateway
+     * @param sessionId A session ID from the Mastercard Gateway
      * @param apiVersion The API version number used when the session was created
-     * @param payload    A map of the request data
+     * @param payload A map of the request data
      * @return A <tt>Single</tt> of the response map
      * @see [RxJava: Single](http://reactivex.io/RxJava/javadoc/io/reactivex/Single.html)
      */
@@ -115,7 +116,18 @@ class Gateway {
     }
 
     /**
+     * Initiates payer authentication with the Gateway
+     * The API version number provided MUST match the version used when the session was created.
      *
+     * This will execute the necessary network request on a background thread
+     * and return the response (or error) to the provided callback.
+     *
+     * @param sessionId A session ID from the Mastercard Gateway
+     * @param orderId A user-generated order ID for this session
+     * @param transactionId A user-generated transaction ID for this session
+     * @param apiVersion The API version number used when the session was created
+     * @param payload A map of the request data
+     * @param callback A callback to handle success and error messages
      */
     fun initiateAuthentication(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap, callback: GatewayCallback) {
         val request = buildInitiateAuthenticationRequest(sessionId, orderId, transactionId, apiVersion, payload)
@@ -123,7 +135,18 @@ class Gateway {
     }
 
     /**
+     * Initiates payer authentication with the Gateway
+     * The API version number provided MUST match the version used when the session was created.
      *
+     * Does not adhere to any particular scheduler
+     *
+     * @param sessionId A session ID from the Mastercard Gateway
+     * @param orderId A user-generated order ID for this session
+     * @param transactionId A user-generated transaction ID for this session
+     * @param apiVersion The API version number used when the session was created
+     * @param payload A map of the request data
+     * @return A <tt>Single</tt> of the response map
+     * @see [RxJava: Single](http://reactivex.io/RxJava/javadoc/io/reactivex/Single.html)
      */
     fun initiateAuthentication(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): Single<GatewayMap> {
         val request = buildInitiateAuthenticationRequest(sessionId, orderId, transactionId, apiVersion, payload)
@@ -137,7 +160,18 @@ class Gateway {
     }
 
     /**
+     * Authenticates the payer with the Gateway
+     * The API version number provided MUST match the version used when the session was created.
      *
+     * This will execute the necessary network request on a background thread
+     * and return the response (or error) to the provided callback.
+     *
+     * @param sessionId A session ID from the Mastercard Gateway
+     * @param orderId A user-generated order ID for this session
+     * @param transactionId A user-generated transaction ID for this session
+     * @param apiVersion The API version number used when the session was created
+     * @param payload A map of the request data
+     * @param callback A callback to handle success and error messages
      */
     fun authenticatePayer(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap, callback: GatewayCallback) {
         val request = buildAuthenticatePayerRequest(sessionId, orderId, transactionId, apiVersion, payload)
@@ -145,7 +179,18 @@ class Gateway {
     }
 
     /**
+     * Authenticates the payer with the Gateway
+     * The API version number provided MUST match the version used when the session was created.
      *
+     * Does not adhere to any particular scheduler
+     *
+     * @param sessionId A session ID from the Mastercard Gateway
+     * @param orderId A user-generated order ID for this session
+     * @param transactionId A user-generated transaction ID for this session
+     * @param apiVersion The API version number used when the session was created
+     * @param payload A map of the request data
+     * @return A <tt>Single</tt> of the response map
+     * @see [RxJava: Single](http://reactivex.io/RxJava/javadoc/io/reactivex/Single.html)
      */
     fun authenticatePayer(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): Single<GatewayMap> {
         val request = buildAuthenticatePayerRequest(sessionId, orderId, transactionId, apiVersion, payload)
@@ -210,8 +255,8 @@ class Gateway {
          * Starts the [Gateway3DSecureActivity] for result, initializing it with the provided html
          *
          * @param activity The calling activity context
-         * @param html     The initial HTML to render in the web view
-         * @param title    An optional title to render in the toolbar
+         * @param html The initial HTML to render in the web view
+         * @param title An optional title to render in the toolbar
          */
         @JvmOverloads
         @JvmStatic
@@ -276,7 +321,6 @@ class Gateway {
          * @param request A properly formatted PaymentDataRequest
          * @param activity The calling activity
          * @see [Payments Client](https://developers.google.com/pay/api/android/guides/tutorial.paymentsclient)
-         *
          * @see [Payment Data Request](https://developers.google.com/pay/api/android/guides/tutorial.paymentdatarequest)
          */
         @JvmStatic

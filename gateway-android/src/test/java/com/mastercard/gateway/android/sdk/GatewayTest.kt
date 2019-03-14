@@ -8,10 +8,9 @@ import android.os.Parcelable
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.wallet.AutoResolveHelper
 import com.google.android.gms.wallet.PaymentData
-import com.nhaarman.mockito_kotlin.*
+import com.nhaarman.mockitokotlin2.*
 
 import org.json.JSONObject
-import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -23,9 +22,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
-import org.mockito.Mock
-import org.mockito.MockitoAnnotations
-import org.mockito.Spy
+import org.mockito.*
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
@@ -37,18 +34,12 @@ class GatewayTest {
     @Mock
     private lateinit var mockComms: GatewayComms
 
-
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
 
         doNothing().whenever(mockComms).runGatewayRequest(any(), any())
         gateway.comms = mockComms
-    }
-
-    @After
-    fun tearDown() {
-        reset(gateway, mockComms)
     }
 
     @Test
@@ -63,9 +54,9 @@ class GatewayTest {
         gateway.updateSession(sessionId, apiVersion, payload, mock())
 
         // capture request
-        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
-        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
-        val request = acRequest.firstValue
+        val captor : KArgumentCaptor<GatewayRequest> = argumentCaptor()
+        verify(mockComms).runGatewayRequest(captor.capture(), any())
+        val request = captor.firstValue
 
         assertTrue(request.payload.containsKey("device.browser"))
         assertTrue(request.payload.containsKey("apiOperation"))
@@ -87,9 +78,9 @@ class GatewayTest {
         gateway.updateSession(sessionId, apiVersion, payload, mock())
 
         // capture request
-        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
-        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
-        val request = acRequest.firstValue
+        val captor : KArgumentCaptor<GatewayRequest> = argumentCaptor()
+        verify(mockComms).runGatewayRequest(captor.capture(), any())
+        val request = captor.firstValue
 
         assertTrue(request.payload.containsKey("device.browser"))
         assertFalse(request.payload.containsKey("apiOperation"))

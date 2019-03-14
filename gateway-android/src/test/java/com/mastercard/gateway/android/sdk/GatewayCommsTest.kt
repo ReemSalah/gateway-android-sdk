@@ -1,20 +1,18 @@
 package com.mastercard.gateway.android.sdk
 
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.reset
-import com.nhaarman.mockito_kotlin.verify
-import com.nhaarman.mockito_kotlin.whenever
-import org.junit.After
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.whenever
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mock
 import org.mockito.MockitoAnnotations
 import org.mockito.Spy
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
 
@@ -25,40 +23,35 @@ class GatewayCommsTest {
     @Spy
     private lateinit var comms: GatewayComms
 
+    @Mock
+    private lateinit var mockCallback: GatewayCallback
+
     @Before
     fun setUp() {
         MockitoAnnotations.initMocks(this)
     }
 
-    @After
-    fun tearDown() {
-        reset(comms)
-    }
-
     @Test
     fun testHandleCallbackMessageCallsOnErrorWithThrowableArg() {
-        val callback: GatewayCallback = mock()
         val arg = Exception("Some exception")
 
-        comms.handleCallbackMessage(callback, arg)
+        comms.handleCallbackMessage(mockCallback, arg)
 
-        verify(callback).onError(arg)
+        verify(mockCallback).onError(arg)
     }
 
     @Test
     fun testHandleCallbackMessageCallsSuccessWithNonThrowableArg() {
-        val callback: GatewayCallback = mock()
         val arg: GatewayMap = mock()
 
-        comms.handleCallbackMessage(callback, arg)
+        comms.handleCallbackMessage(mockCallback, arg)
 
-        verify(callback).onSuccess(arg)
+        verify(mockCallback).onSuccess(arg)
     }
 
     @Test
     fun testCreateSslKeystoreContainsInternalCertificate() {
-        val mockCert: X509Certificate = mock()
-        whenever(comms.readCertificate(GatewayComms.INTERMEDIATE_CA)).thenReturn(mockCert)
+        whenever(comms.readCertificate(GatewayComms.INTERMEDIATE_CA)).thenReturn(mock())
 
         val keyStore = comms.createSslKeyStore()
 

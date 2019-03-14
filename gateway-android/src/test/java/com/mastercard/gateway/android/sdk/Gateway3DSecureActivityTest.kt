@@ -3,7 +3,7 @@ package com.mastercard.gateway.android.sdk
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
-import com.nhaarman.mockito_kotlin.*
+import com.nhaarman.mockitokotlin2.*
 
 import org.junit.Before
 import org.junit.Test
@@ -30,7 +30,7 @@ class Gateway3DSecureActivityTest {
         val activityController = spy(Robolectric.buildActivity(Gateway3DSecureActivity::class.java))
 
         activity = spy(activityController.get())
-        doNothing().`when`(activity).onBackPressed()
+        doNothing().whenever(activity).onBackPressed()
     }
 
     @Test
@@ -53,8 +53,8 @@ class Gateway3DSecureActivityTest {
         whenever(activity.extraHtml).thenReturn(html)
         whenever(activity.defaultTitle).thenReturn(defaultTitle)
         whenever(activity.extraTitle).thenReturn(extraTitle)
-        doNothing().`when`(activity).setToolbarTitle(any())
-        doNothing().`when`(activity).setWebViewHtml(any())
+        doNothing().whenever(activity).setToolbarTitle(any())
+        doNothing().whenever(activity).setWebViewHtml(any())
 
         activity.init()
 
@@ -71,8 +71,8 @@ class Gateway3DSecureActivityTest {
         whenever(activity.extraHtml).thenReturn(html)
         whenever(activity.defaultTitle).thenReturn(defaultTitle)
         whenever(activity.extraTitle).thenReturn(extraTitle)
-        doNothing().`when`(activity).setToolbarTitle(any())
-        doNothing().`when`(activity).setWebViewHtml(any())
+        doNothing().whenever(activity).setToolbarTitle(any())
+        doNothing().whenever(activity).setWebViewHtml(any())
 
         activity.init()
 
@@ -167,7 +167,7 @@ class Gateway3DSecureActivityTest {
     fun testWebViewUrlChangesCallIntentToEmailOnMailtoScheme() {
         val testUri = Uri.parse("mailto://something")
 
-        doNothing().`when`(activity).intentToEmail(testUri)
+        doNothing().whenever(activity).intentToEmail(testUri)
 
         activity.webViewUrlChanges(testUri)
 
@@ -178,7 +178,7 @@ class Gateway3DSecureActivityTest {
     fun testWebViewUrlChangesPassesThruUriIfNoSchemeMatch() {
         val testUri = Uri.parse("https://www.google.com")
 
-        doNothing().`when`(activity).loadWebViewUrl(testUri)
+        doNothing().whenever(activity).loadWebViewUrl(testUri)
 
         activity.webViewUrlChanges(testUri)
 
