@@ -3,7 +3,6 @@ buildscript {
 
     repositories {
 
-        // corp jcenter proxy
         maven {
             url 'https://artifacts.mastercard.int/artifactory/maven-all'
         }
@@ -24,7 +23,6 @@ buildscript {
 allprojects {
     repositories {
 
-        // corp jcenter proxy
         maven {
             url 'https://artifacts.mastercard.int/artifactory/maven-all'
         }

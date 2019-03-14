@@ -46,10 +46,9 @@ class ProcessPaymentActivity : AppCompatActivity() {
 
         // init gateway
         gateway = Gateway()
-        gateway.setMerchantId(Config.MERCHANT_ID.getValue(this))
+        gateway.merchantId = Config.MERCHANT_ID.getValue(this)
         try {
-            val region = Gateway.Region.valueOf(Config.REGION.getValue(this))
-            gateway.setRegion(region)
+            gateway.region = Gateway.Region.valueOf(Config.REGION.getValue(this))
         } catch (e: Exception) {
             Log.e(TAG, "Invalid Gateway region value provided", e)
         }

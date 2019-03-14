@@ -11,15 +11,11 @@ import com.google.android.gms.wallet.PaymentData
 import com.nhaarman.mockito_kotlin.*
 
 import org.json.JSONObject
+import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
-
-import java.security.cert.X509Certificate
-
-import javax.net.ssl.SSLContext
-import javax.net.ssl.SSLSocketFactory
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -27,31 +23,32 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
+import org.mockito.Mock
+import org.mockito.MockitoAnnotations
+import org.mockito.Spy
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
 class GatewayTest {
 
+    @Spy
     private lateinit var gateway: Gateway
+
+    @Mock
+    private lateinit var mockComms: GatewayComms
 
 
     @Before
     fun setUp() {
-        gateway = spy(Gateway())
+        MockitoAnnotations.initMocks(this)
+
+        doNothing().whenever(mockComms).runGatewayRequest(any(), any())
+        gateway.comms = mockComms
     }
 
-    @Test
-    fun testSetMerchantIdWorksAsExpected() {
-        gateway.setMerchantId("MERCHANT_ID")
-
-        assertEquals("MERCHANT_ID", gateway.merchantId)
-    }
-
-    @Test
-    fun testSetRegionWorksAsIntended() {
-        gateway.setRegion(Gateway.Region.ASIA_PACIFIC)
-
-        assertEquals(Gateway.Region.ASIA_PACIFIC, gateway.region)
+    @After
+    fun tearDown() {
+        reset(gateway, mockComms)
     }
 
     @Test
@@ -60,19 +57,20 @@ class GatewayTest {
         gateway.region = Gateway.Region.MTF
 
         val sessionId = "session_id"
-        val apiVersion = Gateway.MIN_API_VERSION.toString()
+        val apiVersion = GatewayComms.MIN_API_VERSION.toString()
         val payload = GatewayMap()
 
-        val expectedUrl = "some url"
+        gateway.updateSession(sessionId, apiVersion, payload, mock())
 
-        whenever(gateway.getUpdateSessionUrl(sessionId, apiVersion)).thenReturn(expectedUrl)
-
-        val request = gateway.buildUpdateSessionRequest(sessionId, apiVersion, payload)
+        // capture request
+        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
+        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
+        val request = acRequest.firstValue
 
         assertTrue(request.payload.containsKey("device.browser"))
         assertTrue(request.payload.containsKey("apiOperation"))
         assertEquals("UPDATE_PAYER_DATA", request.payload["apiOperation"])
-        assertEquals(Gateway.USER_AGENT, request.payload["device.browser"])
+        assertEquals(GatewayComms.USER_AGENT, request.payload["device.browser"])
     }
 
     @Test
@@ -84,16 +82,18 @@ class GatewayTest {
         val apiVersion = "50"
         val payload = GatewayMap()
 
-        val expectedUrl = "some url"
         val expectedAuthHeader = "Basic bWVyY2hhbnQuTUVSQ0hBTlRfSUQ6c29tZXNlc3Npb24="
 
-        whenever(gateway.getUpdateSessionUrl(sessionId, apiVersion)).thenReturn(expectedUrl)
+        gateway.updateSession(sessionId, apiVersion, payload, mock())
 
-        val request = gateway.buildUpdateSessionRequest(sessionId, apiVersion, payload)
+        // capture request
+        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
+        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
+        val request = acRequest.firstValue
 
         assertTrue(request.payload.containsKey("device.browser"))
         assertFalse(request.payload.containsKey("apiOperation"))
-        assertEquals(Gateway.USER_AGENT, request.payload["device.browser"])
+        assertEquals(GatewayComms.USER_AGENT, request.payload["device.browser"])
 
         assertTrue(request.headers.containsKey("Authorization"))
         assertEquals(expectedAuthHeader, request.headers["Authorization"])
@@ -113,12 +113,15 @@ class GatewayTest {
         val expectedUrl = "https://test-gateway.mastercard.com/api/rest/version/$apiVersion/merchant/${gateway.merchantId}/order/$orderId/transaction/$txnId"
         val expectedAuthHeader = "Basic bWVyY2hhbnQuTUVSQ0hBTlRfSUQ6c29tZXNlc3Npb24="
 
-        val request = gateway.buildAuthenticationRequest(sessionId, orderId, txnId, apiVersion, payload)
+        gateway.initiateAuthentication(sessionId, orderId, txnId, apiVersion, payload, mock())
+
+        // capture request
+        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
+        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
+        val request = acRequest.firstValue
 
         assertEquals(expectedUrl, request.url)
         assertEquals(GatewayRequest.Method.PUT, request.method)
-        assertTrue(request.payload.containsKey("device.browser"))
-        assertEquals(Gateway.USER_AGENT, request.payload["device.browser"])
         assertTrue(request.headers.containsKey("Authorization"))
         assertEquals(expectedAuthHeader, request.headers["Authorization"])
     }
@@ -136,7 +139,12 @@ class GatewayTest {
 
         val expectedApiOperation = "INITIATE_AUTHENTICATION"
 
-        val request = gateway.buildInitiateAuthenticationRequest(sessionId, orderId, txnId, apiVersion, payload)
+        gateway.initiateAuthentication(sessionId, orderId, txnId, apiVersion, payload, mock())
+
+        // capture request
+        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
+        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
+        val request = acRequest.firstValue
 
         assertTrue(request.payload.containsKey("apiOperation"))
         assertEquals(expectedApiOperation, request.payload["apiOperation"])
@@ -155,7 +163,12 @@ class GatewayTest {
 
         val expectedApiOperation = "AUTHENTICATE_PAYER"
 
-        val request = gateway.buildAuthenticatePayerRequest(sessionId, orderId, txnId, apiVersion, payload)
+        gateway.authenticatePayer(sessionId, orderId, txnId, apiVersion, payload, mock())
+
+        // capture request
+        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
+        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
+        val request = acRequest.firstValue
 
         assertTrue(request.payload.containsKey("apiOperation"))
         assertEquals(expectedApiOperation, request.payload["apiOperation"])
@@ -317,11 +330,13 @@ class GatewayTest {
 
     @Test
     fun testGetApiUrlThrowsExceptionIfRegionIsNull() {
+        val sessionId = "someSession"
         val apiVersion = "44"
+        gateway.merchantId = "MERCHANT_ID"
         gateway.region = null
 
         try {
-            val apiUrl = gateway.getApiUrl(apiVersion)
+            gateway.updateSession(sessionId, apiVersion, GatewayMap(), mock())
 
             fail("Null region should have caused illegal state exception")
         } catch (e: Exception) {
@@ -332,10 +347,12 @@ class GatewayTest {
 
     @Test
     fun testGetApiUrlThrowsExceptionIfApiVersionIsLessThanMin() {
-        val apiVersion = (Gateway.MIN_API_VERSION - 1).toString()
+        val sessionId = "someSession"
+        val apiVersion = (GatewayComms.MIN_API_VERSION - 1).toString()
+        gateway.merchantId = "MERCHANT_ID"
 
         try {
-            val apiUrl = gateway.getApiUrl(apiVersion)
+            gateway.updateSession(sessionId, apiVersion, GatewayMap(), mock())
 
             fail("Api version less than minimum value should have caused illegal argument exception")
         } catch (e: Exception) {
@@ -345,19 +362,13 @@ class GatewayTest {
     }
 
     @Test
-    fun testGetApiUrlWorksAsIntended() {
-        gateway.setRegion(Gateway.Region.NORTH_AMERICA)
-        val expectedUrl = "https://na-gateway.mastercard.com/api/rest/version/" + Gateway.MIN_API_VERSION
-
-        assertEquals(expectedUrl, gateway.getApiUrl(Gateway.MIN_API_VERSION.toString()))
-    }
-
-    @Test
     fun testGetUpdateSessionUrlThrowsExceptionIfMerchantIdIsNull() {
         gateway.merchantId = null
+        val sessionId = "someSession"
+        val apiVersion = GatewayComms.MIN_API_VERSION.toString()
 
         try {
-            val url = gateway.getUpdateSessionUrl("sess1234", Gateway.MIN_API_VERSION.toString())
+            gateway.updateSession(sessionId, apiVersion, GatewayMap(), mock())
 
             fail("Null merchant id should have caused illegal state exception")
         } catch (e: Exception) {
@@ -371,97 +382,42 @@ class GatewayTest {
         gateway.merchantId = "somemerchant"
         gateway.region = Gateway.Region.NORTH_AMERICA
 
-        val expectedUrl = "https://na-gateway.mastercard.com/api/rest/version/" + Gateway.MIN_API_VERSION + "/merchant/somemerchant/session/sess1234"
+        val sessionId = "someSession"
+        val apiVersion = GatewayComms.MIN_API_VERSION.toString()
 
-        val actualUrl = gateway.getUpdateSessionUrl("sess1234", Gateway.MIN_API_VERSION.toString())
+        val expectedUrl = "https://na-gateway.mastercard.com/api/rest/version/$apiVersion/merchant/somemerchant/session/$sessionId"
 
-        assertEquals(expectedUrl, actualUrl)
-    }
+        gateway.updateSession(sessionId, apiVersion, GatewayMap(), mock())
 
-    @Test
-    fun testHandleCallbackMessageCallsOnErrorWithThrowableArg() {
-        val callback: GatewayCallback = mock()
-        val arg = Exception("Some exception")
+        // capture request
+        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
+        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
+        val request = acRequest.firstValue
 
-        gateway.handleCallbackMessage(callback, arg)
-
-        verify(callback).onError(arg)
-    }
-
-    @Test
-    fun testHandleCallbackMessageCallsSuccessWithNonThrowableArg() {
-        val callback: GatewayCallback = mock()
-        val arg: GatewayMap = mock()
-
-        gateway.handleCallbackMessage(callback, arg)
-
-        verify(callback).onSuccess(arg)
-    }
-
-    @Test
-    fun testCreateSslKeystoreContainsInternalCertificate() {
-        val mockCert: X509Certificate = mock()
-        whenever(gateway.readCertificate(Gateway.INTERMEDIATE_CA)).thenReturn(mockCert)
-
-        val keyStore = gateway.createSslKeyStore()
-
-        assertTrue(keyStore.containsAlias("gateway.mastercard.com"))
-    }
-
-    @Test
-    fun testReadingInternalCertificateWorksAsExpected() {
-        val certificate = gateway.readCertificate(Gateway.INTERMEDIATE_CA)
-        val expectedSerialNo = "1372807406"
-
-        assertNotNull(certificate)
-        assertEquals(expectedSerialNo, certificate.serialNumber.toString())
-    }
-
-    @Test
-    fun testCreateConnectionWorksAsIntended() {
-        val request = GatewayRequest(
-                url = "https://www.mastercard.com",
-                method = GatewayRequest.Method.PUT,
-                payload = GatewayMap()
-        )
-
-        val context: SSLContext = mock()
-        val socketFactory: SSLSocketFactory = mock()
-        whenever(context.socketFactory).thenReturn(socketFactory)
-        whenever(gateway.createSslContext()).thenReturn(context)
-
-        val c = gateway.createHttpsUrlConnection(request)
-
-        assertEquals(request.url, c.url.toString())
-        assertEquals(socketFactory, c.sslSocketFactory)
-        assertEquals(Gateway.CONNECTION_TIMEOUT.toLong(), c.connectTimeout.toLong())
-        assertEquals(Gateway.READ_TIMEOUT.toLong(), c.readTimeout.toLong())
-        assertEquals("PUT", c.requestMethod)
-        assertEquals(Gateway.USER_AGENT, c.getRequestProperty("User-Agent"))
-        assertEquals("application/json", c.getRequestProperty("Content-Type"))
-        assertTrue(c.doOutput)
-    }
-
-    @Test
-    fun testIsStatusOkWorksAsIntended() {
-        val tooLow = 199
-        val tooHigh = 300
-        val justRight = 200
-
-        assertFalse(gateway.isStatusCodeOk(tooLow))
-        assertFalse(gateway.isStatusCodeOk(tooHigh))
-        assertTrue(gateway.isStatusCodeOk(justRight))
+        assertEquals(expectedUrl, request.url)
     }
 
     @Test
     fun testCreateAuthHeaderWorksAsExpected() {
-        val sessionId = "somesession"
         gateway.merchantId = "MERCHANT_ID"
+        gateway.region = Gateway.Region.NORTH_AMERICA
+
+        val sessionId = "somesession"
+        val orderId = "order"
+        val txnId = "txn"
+        val apiVersion = GatewayComms.MIN_API_VERSION.toString()
+        val payload = GatewayMap()
 
         val expectedAuthHeader = "Basic bWVyY2hhbnQuTUVSQ0hBTlRfSUQ6c29tZXNlc3Npb24="
 
-        val authHeader = gateway.createAuthHeader(sessionId)
+        gateway.initiateAuthentication(sessionId, orderId, txnId, apiVersion, payload, mock())
 
-        assertEquals(expectedAuthHeader, authHeader)
+        // capture request
+        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
+        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
+        val request = acRequest.firstValue
+
+        assertTrue(request.headers.containsKey("Authorization"))
+        assertEquals(expectedAuthHeader, request.headers["Authorization"])
     }
 }

@@ -19,30 +19,14 @@ package com.mastercard.gateway.android.sdk
 
 import android.app.Activity
 import android.content.Intent
-import android.os.Handler
 import android.util.Base64
-
 import com.google.android.gms.common.api.Status
 import com.google.android.gms.wallet.AutoResolveHelper
-
 import com.google.android.gms.wallet.PaymentData
 import com.google.android.gms.wallet.PaymentDataRequest
 import com.google.android.gms.wallet.PaymentsClient
-import com.google.gson.Gson
-
-import org.json.JSONObject
-
-import java.io.ByteArrayInputStream
-import java.net.URL
-import java.security.KeyStore
-import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
-
-import javax.net.ssl.HttpsURLConnection
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManagerFactory
-
 import io.reactivex.Single
+import org.json.JSONObject
 
 
 /**
@@ -57,10 +41,11 @@ import io.reactivex.Single
  */
 class Gateway {
 
-    internal var logger: Logger = BaseLogger()
-    internal var gson = Gson()
-    internal var merchantId: String? = null
-    internal var region: Region? = null
+    @JvmField internal var comms = GatewayComms()
+
+    var merchantId: String? = null
+    var region: Region? = null
+
 
     /**
      * The available gateway regions
@@ -73,51 +58,8 @@ class Gateway {
     }
 
     /**
-     * Gets the current Merchant ID
-     *
-     * @return The current Merchant ID
-     */
-    fun getMerchantId(): String? {
-        return merchantId
-    }
-
-    /**
-     * Sets the current Merchant ID
-     *
-     * @param merchantId A valid Merchant ID
-     * @return The <tt>Gateway</tt> instance
-     * @throws IllegalArgumentException If the provided Merchant ID is null
-     */
-    fun setMerchantId(merchantId: String): Gateway {
-        this.merchantId = merchantId
-        return this
-    }
-
-    /**
-     * Gets the current [Region]
-     *
-     * @return The region
-     */
-    fun getRegion(): Region? {
-        return region
-    }
-
-    /**
-     * Sets the current [Region] to target
-     *
-     * @param region The region
-     * @return The <tt>Gateway</tt> instance
-     * @throws IllegalArgumentException If the provided Merchant ID is null
-     */
-    fun setRegion(region: Region): Gateway {
-        this.region = region
-        return this
-    }
-
-    /**
      * Updates a Mastercard Gateway session with the provided information.<br></br>
      * The API version number provided MUST match the version used when the session was created.
-     *
      *
      * This will execute the necessary network request on a background thread
      * and return the response (or error) to the provided callback.
@@ -126,18 +68,16 @@ class Gateway {
      * @param apiVersion The API version number used when the session was created
      * @param payload    A map of the request data
      * @param callback   A callback to handle success and error messages
-     * @throws IllegalArgumentException If the provided session id is null
      */
     fun updateSession(sessionId: String, apiVersion: String, payload: GatewayMap, callback: GatewayCallback) {
         val request = buildUpdateSessionRequest(sessionId, apiVersion, payload)
 
-        runGatewayRequest(request, callback)
+        comms.runGatewayRequest(request, callback)
     }
 
     /**
      * Updates a Mastercard Gateway session with the provided information.
      * The API version number provided MUST match the version used when the session was created.
-     *
      *
      * Does not adhere to any particular scheduler
      *
@@ -145,27 +85,26 @@ class Gateway {
      * @param apiVersion The API version number used when the session was created
      * @param payload    A map of the request data
      * @return A <tt>Single</tt> of the response map
-     * @throws IllegalArgumentException If the provided session id is null
      * @see [RxJava: Single](http://reactivex.io/RxJava/javadoc/io/reactivex/Single.html)
      */
     fun updateSession(sessionId: String, apiVersion: String, payload: GatewayMap): Single<GatewayMap> {
         val request = buildUpdateSessionRequest(sessionId, apiVersion, payload)
 
-        return runGatewayRequest(request)
+        return comms.runGatewayRequest(request)
     }
 
-    internal fun buildUpdateSessionRequest(sessionId: String, apiVersion: String, payload: GatewayMap): GatewayRequest {
+    private fun buildUpdateSessionRequest(sessionId: String, apiVersion: String, payload: GatewayMap): GatewayRequest {
         val request = GatewayRequest(
                 url = getUpdateSessionUrl(sessionId, apiVersion),
                 method = GatewayRequest.Method.PUT,
                 payload = payload.apply {
-                    this["device.browser"] = USER_AGENT
+                    this["device.browser"] = GatewayComms.USER_AGENT
                 }
         )
 
         // version 50 of the API dropped the requirement for the apiOperation parameter
         // 50+ uses the standard Update Session API
-        if (Integer.parseInt(apiVersion) < 50) {
+        if (apiVersion.toInt() < 50) {
             request.payload["apiOperation"] = "UPDATE_PAYER_DATA"
         } else {
             // Auth header required for v50+
@@ -180,7 +119,7 @@ class Gateway {
      */
     fun initiateAuthentication(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap, callback: GatewayCallback) {
         val request = buildInitiateAuthenticationRequest(sessionId, orderId, transactionId, apiVersion, payload)
-        runGatewayRequest(request, callback)
+        comms.runGatewayRequest(request, callback)
     }
 
     /**
@@ -188,10 +127,10 @@ class Gateway {
      */
     fun initiateAuthentication(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): Single<GatewayMap> {
         val request = buildInitiateAuthenticationRequest(sessionId, orderId, transactionId, apiVersion, payload)
-        return runGatewayRequest(request)
+        return comms.runGatewayRequest(request)
     }
 
-    internal fun buildInitiateAuthenticationRequest(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): GatewayRequest {
+    private fun buildInitiateAuthenticationRequest(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): GatewayRequest {
         return buildAuthenticationRequest(sessionId, orderId, transactionId, apiVersion, payload).apply {
             payload["apiOperation"] = "INITIATE_AUTHENTICATION"
         }
@@ -202,7 +141,7 @@ class Gateway {
      */
     fun authenticatePayer(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap, callback: GatewayCallback) {
         val request = buildAuthenticatePayerRequest(sessionId, orderId, transactionId, apiVersion, payload)
-        runGatewayRequest(request, callback)
+        comms.runGatewayRequest(request, callback)
     }
 
     /**
@@ -210,30 +149,29 @@ class Gateway {
      */
     fun authenticatePayer(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): Single<GatewayMap> {
         val request = buildAuthenticatePayerRequest(sessionId, orderId, transactionId, apiVersion, payload)
-        return runGatewayRequest(request)
+        return comms.runGatewayRequest(request)
     }
 
-    internal fun buildAuthenticatePayerRequest(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): GatewayRequest {
+    private fun buildAuthenticatePayerRequest(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): GatewayRequest {
         return buildAuthenticationRequest(sessionId, orderId, transactionId, apiVersion, payload).apply {
             payload["apiOperation"] = "AUTHENTICATE_PAYER"
         }
     }
 
-    internal fun buildAuthenticationRequest(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): GatewayRequest {
+    private fun buildAuthenticationRequest(sessionId: String, orderId: String, transactionId: String, apiVersion: String, payload: GatewayMap): GatewayRequest {
         return GatewayRequest(
                 url = getAuthenticationUrl(orderId, transactionId, apiVersion),
                 method = GatewayRequest.Method.PUT,
                 payload = payload.apply {
                     this["session.id"] = sessionId
-//                    this["device.browser"] = USER_AGENT
                 },
                 headers = mutableMapOf("Authorization" to createAuthHeader(sessionId))
         )
     }
 
-    internal fun getApiUrl(apiVersion: String): String {
-        if (Integer.valueOf(apiVersion) < MIN_API_VERSION) {
-            throw IllegalArgumentException("API version must be >= $MIN_API_VERSION")
+    private fun getApiUrl(apiVersion: String): String {
+        if (apiVersion.toInt() < GatewayComms.MIN_API_VERSION) {
+            throw IllegalArgumentException("API version must be >= ${GatewayComms.MIN_API_VERSION}")
         }
 
         if (region == null) {
@@ -243,7 +181,7 @@ class Gateway {
         return "https://${region!!.prefix}gateway.mastercard.com/api/rest/version/$apiVersion"
     }
 
-    internal fun getUpdateSessionUrl(sessionId: String, apiVersion: String): String {
+    private fun getUpdateSessionUrl(sessionId: String, apiVersion: String): String {
         if (merchantId == null) {
             throw IllegalStateException("You must initialize the the Gateway instance with a Merchant Id before use")
         }
@@ -251,7 +189,7 @@ class Gateway {
         return getApiUrl(apiVersion) + "/merchant/$merchantId/session/$sessionId"
     }
 
-    internal fun getAuthenticationUrl(orderId: String, transactionId: String, apiVersion: String): String {
+    private fun getAuthenticationUrl(orderId: String, transactionId: String, apiVersion: String): String {
         if (merchantId == null) {
             throw IllegalStateException("You must initialize the the Gateway instance with a Merchant Id before use")
         }
@@ -259,195 +197,14 @@ class Gateway {
         return getApiUrl(apiVersion) + "/merchant/$merchantId/order/$orderId/transaction/$transactionId"
     }
 
-    internal fun runGatewayRequest(request: GatewayRequest, callback: GatewayCallback) {
-        // create handler on current thread
-        val handler = Handler { msg -> handleCallbackMessage(callback, msg.obj) }
-
-        Thread {
-            val m = handler.obtainMessage()
-            try {
-                m.obj = executeGatewayRequest(request)
-            } catch (e: Exception) {
-                m.obj = e
-            }
-
-            handler.sendMessage(m)
-        }.start()
-    }
-
-    internal fun runGatewayRequest(request: GatewayRequest): Single<GatewayMap> {
-        return Single.fromCallable { executeGatewayRequest(request) }
-    }
-
-    // handler callback method when executing a request on a new thread
-    internal fun handleCallbackMessage(callback: GatewayCallback?, arg: Any): Boolean {
-        if (callback != null) {
-            if (arg is Throwable) {
-                callback.onError(arg)
-            } else {
-                callback.onSuccess(arg as GatewayMap)
-            }
-        }
-        return true
-    }
-
-    internal fun executeGatewayRequest(request: GatewayRequest): GatewayMap {
-        // init connection
-        val c = createHttpsUrlConnection(request)
-
-        // encode request data to json
-        val requestData = gson.toJson(request.payload)
-
-        // log request data
-        logger.logRequest(c, requestData)
-
-        // write request data
-        if (requestData != null) {
-            val os = c.outputStream
-            os.write(requestData.toByteArray(charset("UTF-8")))
-            os.close()
-        }
-
-        // initiate the connection
-        c.connect()
-
-        var responseData: String? = null
-        val statusCode = c.responseCode
-        val isStatusOk = statusCode in 200..299
-
-        // if connection has output stream, get the data
-        // socket time-out exceptions will be thrown here
-        if (c.doInput) {
-            val inputStream = if (isStatusOk) c.inputStream else c.errorStream
-            responseData = inputStream.readTextAndClose()
-        }
-
-        c.disconnect()
-
-        // log response
-        logger.logResponse(c, responseData)
-
-        // parse the response body
-        val response = GatewayMap(responseData)
-
-        // if response static is good, return response
-        if (isStatusOk) {
-            return response
-        }
-
-        // otherwise, create a gateway exception and throw it
-        var message = response["error.explanation"] as String?
-        if (message == null) {
-            message = "An error occurred"
-        }
-
-        throw GatewayException(message, statusCode, response)
-    }
-
-    internal fun createSslContext(): SSLContext {
-        // create and initialize a KeyStore
-        val keyStore = createSslKeyStore()
-
-        // create a TrustManager that trusts the INTERMEDIATE_CA in our KeyStore
-        val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
-        tmf.init(keyStore)
-
-        val trustManagers = tmf.trustManagers
-
-        val context = SSLContext.getInstance("TLS")
-        context.init(null, trustManagers, null)
-
-        return context
-    }
-
-    internal fun createSslKeyStore(): KeyStore {
-        val keyStore = KeyStore.getInstance(KeyStore.getDefaultType())
-        keyStore.load(null, null)
-
-        // add our trusted cert to the keystore
-        keyStore.setCertificateEntry("gateway.mastercard.com", readCertificate(INTERMEDIATE_CA))
-
-        return keyStore
-    }
-
-    internal fun readCertificate(cert: String): X509Certificate {
-        val bytes = cert.toByteArray()
-        val inputStream = ByteArrayInputStream(bytes)
-
-        return CertificateFactory.getInstance("X.509").generateCertificate(inputStream) as X509Certificate
-    }
-
-    internal fun createHttpsUrlConnection(request: GatewayRequest): HttpsURLConnection {
-        // parse url
-        val url = URL(request.url)
-
-        // init ssl context with limiting trust managers
-        val context = createSslContext()
-
-        val c = url.openConnection() as HttpsURLConnection
-        c.sslSocketFactory = context.socketFactory
-        c.connectTimeout = CONNECTION_TIMEOUT
-        c.readTimeout = READ_TIMEOUT
-        c.requestMethod = request.method.name
-        c.doOutput = true
-
-        c.setRequestProperty("User-Agent", USER_AGENT)
-        c.setRequestProperty("Content-Type", "application/json")
-
-        // add extra headers
-        for (key in request.headers.keys) {
-            c.setRequestProperty(key, request.headers[key])
-        }
-
-        return c
-    }
-
-    internal fun createAuthHeader(sessionId: String): String {
+    private fun createAuthHeader(sessionId: String): String {
         val value = "merchant.$merchantId:$sessionId"
         return "Basic " + Base64.encodeToString(value.toByteArray(), Base64.NO_WRAP)
     }
 
-    internal fun isStatusCodeOk(statusCode: Int): Boolean {
-        return statusCode in 200..299
-    }
-
-
     companion object {
-        const val MIN_API_VERSION = 39
-        const val CONNECTION_TIMEOUT = 15000
-        const val READ_TIMEOUT = 60000
         const val REQUEST_3D_SECURE = 10000
         const val REQUEST_GOOGLE_PAY_LOAD_PAYMENT_DATA = 10001
-        const val USER_AGENT = "Gateway-Android-SDK/" + BuildConfig.VERSION_NAME
-        const val INTERMEDIATE_CA = "-----BEGIN CERTIFICATE-----\n" +
-                "MIIFAzCCA+ugAwIBAgIEUdNg7jANBgkqhkiG9w0BAQsFADCBvjELMAkGA1UEBhMC\n" +
-                "VVMxFjAUBgNVBAoTDUVudHJ1c3QsIEluYy4xKDAmBgNVBAsTH1NlZSB3d3cuZW50\n" +
-                "cnVzdC5uZXQvbGVnYWwtdGVybXMxOTA3BgNVBAsTMChjKSAyMDA5IEVudHJ1c3Qs\n" +
-                "IEluYy4gLSBmb3IgYXV0aG9yaXplZCB1c2Ugb25seTEyMDAGA1UEAxMpRW50cnVz\n" +
-                "dCBSb290IENlcnRpZmljYXRpb24gQXV0aG9yaXR5IC0gRzIwHhcNMTQxMDIyMTcw\n" +
-                "NTE0WhcNMjQxMDIzMDczMzIyWjCBujELMAkGA1UEBhMCVVMxFjAUBgNVBAoTDUVu\n" +
-                "dHJ1c3QsIEluYy4xKDAmBgNVBAsTH1NlZSB3d3cuZW50cnVzdC5uZXQvbGVnYWwt\n" +
-                "dGVybXMxOTA3BgNVBAsTMChjKSAyMDEyIEVudHJ1c3QsIEluYy4gLSBmb3IgYXV0\n" +
-                "aG9yaXplZCB1c2Ugb25seTEuMCwGA1UEAxMlRW50cnVzdCBDZXJ0aWZpY2F0aW9u\n" +
-                "IEF1dGhvcml0eSAtIEwxSzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB\n" +
-                "ANo/ltBNuS9E59s5XptQ7lylYdpBZ1MJqgCajld/KWvbx+EhJKo60I1HI9Ltchbw\n" +
-                "kSHSXbe4S6iDj7eRMmjPziWTLLJ9l8j+wbQXugmeA5CTe3xJgyJoipveR8MxmHou\n" +
-                "fUAL0u8+07KMqo9Iqf8A6ClYBve2k1qUcyYmrVgO5UK41epzeWRoUyW4hM+Ueq4G\n" +
-                "RQyja03Qxr7qGKQ28JKyuhyIjzpSf/debYMcnfAf5cPW3aV4kj2wbSzqyc+UQRlx\n" +
-                "RGi6RzwE6V26PvA19xW2nvIuFR4/R8jIOKdzRV1NsDuxjhcpN+rdBQEiu5Q2Ko1b\n" +
-                "Nf5TGS8IRsEqsxpiHU4r2RsCAwEAAaOCAQkwggEFMA4GA1UdDwEB/wQEAwIBBjAP\n" +
-                "BgNVHRMECDAGAQH/AgEAMDMGCCsGAQUFBwEBBCcwJTAjBggrBgEFBQcwAYYXaHR0\n" +
-                "cDovL29jc3AuZW50cnVzdC5uZXQwMAYDVR0fBCkwJzAloCOgIYYfaHR0cDovL2Ny\n" +
-                "bC5lbnRydXN0Lm5ldC9nMmNhLmNybDA7BgNVHSAENDAyMDAGBFUdIAAwKDAmBggr\n" +
-                "BgEFBQcCARYaaHR0cDovL3d3dy5lbnRydXN0Lm5ldC9ycGEwHQYDVR0OBBYEFIKi\n" +
-                "cHTdvFM/z3vU981/p2DGCky/MB8GA1UdIwQYMBaAFGpyJnrQHu995ztpUdRsjZ+Q\n" +
-                "EmarMA0GCSqGSIb3DQEBCwUAA4IBAQA/HBpb/0AiHY81DC2qmSerwBEycNc2KGml\n" +
-                "jbEnmUK+xJPrSFdDcSPE5U6trkNvknbFGe/KvG9CTBaahqkEOMdl8PUM4ErfovrO\n" +
-                "GhGonGkvG9/q4jLzzky8RgzAiYDRh2uiz2vUf/31YFJnV6Bt0WRBFG00Yu0GbCTy\n" +
-                "BrwoAq8DLcIzBfvLqhboZRBD9Wlc44FYmc1r07jHexlVyUDOeVW4c4npXEBmQxJ/\n" +
-                "B7hlVtWNw6f1sbZlnsCDNn8WRTx0S5OKPPEr9TVwc3vnggSxGJgO1JxvGvz8pzOl\n" +
-                "u7sY82t6XTKH920l5OJ2hiEeEUbNdg5vT6QhcQqEpy02qUgiUX6C\n" +
-                "-----END CERTIFICATE-----\n"
 
         /**
          * Starts the [Gateway3DSecureActivity] for result, initializing it with the provided html
