@@ -11,18 +11,15 @@ import com.google.android.gms.wallet.PaymentData
 import com.nhaarman.mockitokotlin2.*
 
 import org.json.JSONObject
+
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 import org.junit.Before
 import org.mockito.*
+import kotlin.test.*
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
@@ -53,15 +50,14 @@ class GatewayTest {
 
         gateway.updateSession(sessionId, apiVersion, payload, mock())
 
-        // capture request
-        val captor : KArgumentCaptor<GatewayRequest> = argumentCaptor()
-        verify(mockComms).runGatewayRequest(captor.capture(), any())
-        val request = captor.firstValue
+        argumentCaptor<GatewayRequest>().apply {
+            verify(mockComms).runGatewayRequest(capture(), any())
 
-        assertTrue(request.payload.containsKey("device.browser"))
-        assertTrue(request.payload.containsKey("apiOperation"))
-        assertEquals("UPDATE_PAYER_DATA", request.payload["apiOperation"])
-        assertEquals(GatewayComms.USER_AGENT, request.payload["device.browser"])
+            assertTrue(firstValue.payload.containsKey("device.browser"))
+            assertTrue(firstValue.payload.containsKey("apiOperation"))
+            assertEquals("UPDATE_PAYER_DATA", firstValue.payload["apiOperation"])
+            assertEquals(GatewayComms.USER_AGENT, firstValue.payload["device.browser"])
+        }
     }
 
     @Test
@@ -77,17 +73,16 @@ class GatewayTest {
 
         gateway.updateSession(sessionId, apiVersion, payload, mock())
 
-        // capture request
-        val captor : KArgumentCaptor<GatewayRequest> = argumentCaptor()
-        verify(mockComms).runGatewayRequest(captor.capture(), any())
-        val request = captor.firstValue
+        argumentCaptor<GatewayRequest>().apply {
+            verify(mockComms).runGatewayRequest(capture(), any())
 
-        assertTrue(request.payload.containsKey("device.browser"))
-        assertFalse(request.payload.containsKey("apiOperation"))
-        assertEquals(GatewayComms.USER_AGENT, request.payload["device.browser"])
+            assertTrue(firstValue.payload.containsKey("device.browser"))
+            assertFalse(firstValue.payload.containsKey("apiOperation"))
+            assertEquals(GatewayComms.USER_AGENT, firstValue.payload["device.browser"])
 
-        assertTrue(request.headers.containsKey("Authorization"))
-        assertEquals(expectedAuthHeader, request.headers["Authorization"])
+            assertTrue(firstValue.headers.containsKey("Authorization"))
+            assertEquals(expectedAuthHeader, firstValue.headers["Authorization"])
+        }
     }
 
     @Test
@@ -106,15 +101,14 @@ class GatewayTest {
 
         gateway.initiateAuthentication(sessionId, orderId, txnId, apiVersion, payload, mock())
 
-        // capture request
-        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
-        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
-        val request = acRequest.firstValue
+        argumentCaptor<GatewayRequest>().apply {
+            verify(mockComms).runGatewayRequest(capture(), any())
 
-        assertEquals(expectedUrl, request.url)
-        assertEquals(GatewayRequest.Method.PUT, request.method)
-        assertTrue(request.headers.containsKey("Authorization"))
-        assertEquals(expectedAuthHeader, request.headers["Authorization"])
+            assertEquals(expectedUrl, firstValue.url)
+            assertEquals(GatewayRequest.Method.PUT, firstValue.method)
+            assertTrue(firstValue.headers.containsKey("Authorization"))
+            assertEquals(expectedAuthHeader, firstValue.headers["Authorization"])
+        }
     }
 
     @Test
@@ -132,13 +126,12 @@ class GatewayTest {
 
         gateway.initiateAuthentication(sessionId, orderId, txnId, apiVersion, payload, mock())
 
-        // capture request
-        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
-        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
-        val request = acRequest.firstValue
+        argumentCaptor<GatewayRequest>().apply {
+            verify(mockComms).runGatewayRequest(capture(), any())
 
-        assertTrue(request.payload.containsKey("apiOperation"))
-        assertEquals(expectedApiOperation, request.payload["apiOperation"])
+            assertTrue(firstValue.payload.containsKey("apiOperation"))
+            assertEquals(expectedApiOperation, firstValue.payload["apiOperation"])
+        }
     }
 
     @Test
@@ -156,13 +149,12 @@ class GatewayTest {
 
         gateway.authenticatePayer(sessionId, orderId, txnId, apiVersion, payload, mock())
 
-        // capture request
-        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
-        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
-        val request = acRequest.firstValue
+        argumentCaptor<GatewayRequest>().apply {
+            verify(mockComms).runGatewayRequest(capture(), any())
 
-        assertTrue(request.payload.containsKey("apiOperation"))
-        assertEquals(expectedApiOperation, request.payload["apiOperation"])
+            assertTrue(firstValue.payload.containsKey("apiOperation"))
+            assertEquals(expectedApiOperation, firstValue.payload["apiOperation"])
+        }
     }
 
     @Test
@@ -380,12 +372,7 @@ class GatewayTest {
 
         gateway.updateSession(sessionId, apiVersion, GatewayMap(), mock())
 
-        // capture request
-        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
-        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
-        val request = acRequest.firstValue
-
-        assertEquals(expectedUrl, request.url)
+        verify(mockComms).runGatewayRequest(argThat { url == expectedUrl }, any())
     }
 
     @Test
@@ -404,11 +391,11 @@ class GatewayTest {
         gateway.initiateAuthentication(sessionId, orderId, txnId, apiVersion, payload, mock())
 
         // capture request
-        val acRequest : KArgumentCaptor<GatewayRequest> = argumentCaptor()
-        verify(mockComms).runGatewayRequest(acRequest.capture(), any())
-        val request = acRequest.firstValue
+        argumentCaptor<GatewayRequest>().apply {
+            verify(mockComms).runGatewayRequest(capture(), any())
 
-        assertTrue(request.headers.containsKey("Authorization"))
-        assertEquals(expectedAuthHeader, request.headers["Authorization"])
+            assertTrue(firstValue.headers.containsKey("Authorization"))
+            assertEquals(expectedAuthHeader, firstValue.headers["Authorization"])
+        }
     }
 }

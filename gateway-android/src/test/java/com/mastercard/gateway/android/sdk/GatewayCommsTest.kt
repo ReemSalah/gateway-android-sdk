@@ -3,8 +3,6 @@ package com.mastercard.gateway.android.sdk
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
-import org.junit.Assert
-import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -15,6 +13,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
@@ -55,7 +57,7 @@ class GatewayCommsTest {
 
         val keyStore = comms.createSslKeyStore()
 
-        Assert.assertTrue(keyStore.containsAlias("gateway.mastercard.com"))
+        assertTrue(keyStore.containsAlias("gateway.mastercard.com"))
     }
 
     @Test
@@ -63,8 +65,8 @@ class GatewayCommsTest {
         val certificate = comms.readCertificate(GatewayComms.INTERMEDIATE_CA)
         val expectedSerialNo = "1372807406"
 
-        Assert.assertNotNull(certificate)
-        Assert.assertEquals(expectedSerialNo, certificate.serialNumber.toString())
+        assertNotNull(certificate)
+        assertEquals(expectedSerialNo, certificate.serialNumber.toString())
     }
 
     @Test
@@ -82,14 +84,14 @@ class GatewayCommsTest {
 
         val c = comms.createHttpsUrlConnection(request)
 
-        Assert.assertEquals(request.url, c.url.toString())
-        Assert.assertEquals(socketFactory, c.sslSocketFactory)
+        assertEquals(request.url, c.url.toString())
+        assertEquals(socketFactory, c.sslSocketFactory)
         assertEquals(GatewayComms.CONNECTION_TIMEOUT.toLong(), c.connectTimeout.toLong())
         assertEquals(GatewayComms.READ_TIMEOUT.toLong(), c.readTimeout.toLong())
-        Assert.assertEquals("PUT", c.requestMethod)
+        assertEquals("PUT", c.requestMethod)
         assertEquals(GatewayComms.USER_AGENT, c.getRequestProperty("User-Agent"))
-        Assert.assertEquals("application/json", c.getRequestProperty("Content-Type"))
-        Assert.assertTrue(c.doOutput)
+        assertEquals("application/json", c.getRequestProperty("Content-Type"))
+        assertTrue(c.doOutput)
     }
 
     @Test
@@ -98,8 +100,8 @@ class GatewayCommsTest {
         val tooHigh = 300
         val justRight = 200
 
-        Assert.assertFalse(comms.isStatusCodeOk(tooLow))
-        Assert.assertFalse(comms.isStatusCodeOk(tooHigh))
-        Assert.assertTrue(comms.isStatusCodeOk(justRight))
+        assertFalse(comms.isStatusCodeOk(tooLow))
+        assertFalse(comms.isStatusCodeOk(tooHigh))
+        assertTrue(comms.isStatusCodeOk(justRight))
     }
 }
