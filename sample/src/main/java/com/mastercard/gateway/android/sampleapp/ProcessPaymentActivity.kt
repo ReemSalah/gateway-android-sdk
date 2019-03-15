@@ -171,7 +171,7 @@ class ProcessPaymentActivity : AppCompatActivity() {
     }
 
     internal fun addCurrencyToSession() {
-        apiController.updateSessionWithOrderDetails(sessionId, orderId, CURRENCY, AddCurrencyCodeToSessionCallback())
+        apiController.updateSessionWithOrderDetails(sessionId, orderId, AMOUNT, CURRENCY, AddCurrencyCodeToSessionCallback())
     }
 
     internal fun collectCardInfo() {

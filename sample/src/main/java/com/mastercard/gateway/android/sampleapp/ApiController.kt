@@ -37,7 +37,6 @@ import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 
 import android.text.TextUtils.isEmpty
-import com.google.gson.Gson
 
 /**
  * ApiController object used to send create and update session requests. Conforms to the singleton
@@ -46,6 +45,7 @@ import com.google.gson.Gson
 class ApiController private constructor() {
 
     internal lateinit var merchantServerUrl: String
+    private val logger = Logger()
 
 
     interface CreateSessionCallback {
@@ -101,7 +101,7 @@ class ApiController private constructor() {
         }.start()
     }
 
-    fun updateSessionWithOrderDetails(sessionId: String, orderId: String, currencyCode: String, callback: UpdateSessionCallback?) {
+    fun updateSessionWithOrderDetails(sessionId: String, orderId: String, amount: String, currencyCode: String, callback: UpdateSessionCallback?) {
         val handler = Handler { message ->
             if (callback != null) {
                 if (message.obj is Throwable) {
@@ -116,7 +116,7 @@ class ApiController private constructor() {
         Thread {
             val m = handler.obtainMessage()
             try {
-                m.obj = executeUpdateSession(sessionId, orderId, currencyCode)
+                m.obj = executeUpdateSession(sessionId, orderId, amount, currencyCode)
             } catch (e: Exception) {
                 m.obj = e
             }
@@ -195,9 +195,10 @@ class ApiController private constructor() {
     }
 
     @Throws(Exception::class)
-    internal fun executeUpdateSession(sessionId: String, orderId: String, currencyCode: String): String {
+    internal fun executeUpdateSession(sessionId: String, orderId: String, amount: String, currencyCode: String): String {
         val request = GatewayMap()
                 .set("order.id", orderId)
+                .set("order.amount", amount)
                 .set("order.currency", currencyCode)
 
         val jsonRequest = GSON.toJson(request)
@@ -349,6 +350,8 @@ class ApiController private constructor() {
             connection.setRequestProperty("Authorization", "Basic $basicAuth")
         }
 
+        logger.logRequest(connection, json)
+
         val out = PrintWriter(connection.outputStream)
         out.print(json)
         out.close()
@@ -372,7 +375,11 @@ class ApiController private constructor() {
         else
             connection.errorStream
 
-        return stream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+        val data = stream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+
+        logger.logResponse(connection, data)
+
+        return data
     }
 
     /**
