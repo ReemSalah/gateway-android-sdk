@@ -24,6 +24,10 @@
     <string name="pay_error_card_info_not_collected">Card info not collected</string>
     <string name="pay_error_processing_your_payment">Error processing your payment</string>
     <string name="pay_error_3ds_authentication_failed">3DS authentication failed</string>
+    <string name="pay_error_3ds_authentication_cancelled">3DS authentication cancelled</string>
+    <string name="pay_error_3ds_timed_out">3DS timed out</string>
+    <string name="pay_error_3ds_protocol_error">3DS protocol error</string>
+    <string name="pay_error_3ds_runtime_error">3DS runtime error</string>
     <string name="pay_error_unable_to_update_session">Unable to update session</string>
     <string name="pay_error_unable_to_create_session">Unable to create session</string>
     <string name="pay_error_unable_to_add_currency_code_to_session">Unable to add currency code to session</string>

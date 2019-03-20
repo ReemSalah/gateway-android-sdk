@@ -175,7 +175,12 @@ class ApiController private constructor() {
 
     @Throws(Exception::class)
     internal fun executeCreateSession(): Pair<String, String> {
-        val jsonResponse = doJsonRequest(URL("$merchantServerUrl/session.php"), "", "POST", null, null, HttpsURLConnection.HTTP_OK)
+        val request = GatewayMap()
+                .set("session.authenticationLimit", 25)
+
+        val jsonRequest = GSON.toJson(request)
+
+        val jsonResponse = doJsonRequest(URL("$merchantServerUrl/session.php"), jsonRequest, "POST", null, null, HttpsURLConnection.HTTP_OK)
 
         val response = GatewayMap(jsonResponse)
 
@@ -200,6 +205,8 @@ class ApiController private constructor() {
                 .set("order.id", orderId)
                 .set("order.amount", amount)
                 .set("order.currency", currencyCode)
+                .set("authentication.acceptVersions", "3DS1,3DS2")
+                .set("authentication.channel", "PAYER_APP")
 
         val jsonRequest = GSON.toJson(request)
 

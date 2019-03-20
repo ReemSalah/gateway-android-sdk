@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Paint
 import android.os.Bundle
+import android.os.Parcel
 import android.util.Log
 import android.view.View
 import androidx.annotation.DrawableRes
@@ -213,7 +214,6 @@ class ProcessPaymentActivity : AppCompatActivity() {
 
         // build the gateway request
         val request = GatewayMap()
-//                .set("order.currency", CURRENCY)
 
         gateway.initiateAuthentication(sessionId, orderId, transactionId, apiVersion, request, InitiateAuthenticationCallback())
     }
@@ -227,6 +227,14 @@ class ProcessPaymentActivity : AppCompatActivity() {
     internal fun showResult(@DrawableRes iconId: Int, @StringRes messageId: Int) {
         binding.resultIcon.setImageResource(iconId)
         binding.resultText.setText(messageId)
+
+        binding.groupConfirm.visibility = View.GONE
+        binding.groupResult.visibility = View.VISIBLE
+    }
+
+    internal fun showResult(@DrawableRes iconId: Int, message: String) {
+        binding.resultIcon.setImageResource(iconId)
+        binding.resultText.text = message
 
         binding.groupConfirm.visibility = View.GONE
         binding.groupResult.visibility = View.VISIBLE
@@ -322,11 +330,11 @@ class ProcessPaymentActivity : AppCompatActivity() {
         override fun onSuccess(response: GatewayMap) {
             Log.i(TAG, "Successfully initiated Authentication")
 
-            val acsTransactionId = response["authentication.3ds2.acsTransactionId"] as String
-            val acsRefNumber = response["authentication.3ds2.acsRefNumber"] as String
-            val acsSignedContent = response["authentication.3ds2.acsSignedContent"] as String
+            val acsTransactionId = response["authentication.3ds2.acsTransactionId"] as String? ?: "acTransactionID"
+            val acsRefNumber = response["authentication.3ds2.acsRefNumber"] as String? ?: "acsRefNumber"
+            val acsSignedContent = response["authentication.3ds2.acsSignedContent"] as String? ?: "acsSignedContent"
 
-            val timeout = response["authentication.3ds2.sdk.timeout"] as Int
+            val timeout = response["authentication.3ds2.sdk.timeout"] as Int? ?: 0
 
             val challengeParameters = ChallengeParameters(threeDS2Transaction.getAuthenticationRequestParameters().sdkTransactionID,
                     acsTransactionId,
@@ -351,12 +359,15 @@ class ProcessPaymentActivity : AppCompatActivity() {
 
     internal inner class StatusReceiver : ChallengeStatusReceiver {
         override fun completed(completionEvent: CompletionEvent) {
+            Log.e(TAG, "3DS Completed")
 
             threeDSecureTwoId = completionEvent.sdkTransactionId
             threeDSecureTwoStatus = completionEvent.transactionStatus
+            if (threeDSecureTwoStatus.isNullOrEmpty()) {
+                threeDSecureTwoStatus = "Y"
+            }
 
-
-            apiController.completeSession(sessionId, orderId, transactionId, AMOUNT, CURRENCY, threeDSecureTwoId, threeDSecureTwoStatus, isGooglePay, CompleteSessionCallback())
+            processPayment()
         }
 
         override fun cancelled() {
@@ -365,7 +376,7 @@ class ProcessPaymentActivity : AppCompatActivity() {
             binding.check3dsProgress.visibility = View.GONE
             binding.check3dsError.visibility = View.VISIBLE
 
-            showResult(R.drawable.failed, R.string.pay_error_3ds_authentication_failed)
+            showResult(R.drawable.failed, R.string.pay_error_3ds_authentication_cancelled)
         }
 
         override fun timedout() {
@@ -374,28 +385,37 @@ class ProcessPaymentActivity : AppCompatActivity() {
             binding.check3dsProgress.visibility = View.GONE
             binding.check3dsError.visibility = View.VISIBLE
 
-            showResult(R.drawable.failed, R.string.pay_error_3ds_authentication_failed)
+            showResult(R.drawable.failed, R.string.pay_error_3ds_timed_out)
 
         }
 
         override fun protocolError(protocolErrorEvent: ProtocolErrorEvent) {
-            Log.e(TAG, protocolErrorEvent.errorMessage.errorDetails)
+            var msg = protocolErrorEvent.errorMessage.errorDescription
+            if (msg.isEmpty()) {
+                msg = getString(R.string.pay_error_3ds_protocol_error)
+            }
+
+            Log.e(TAG, msg)
 
             binding.check3dsProgress.visibility = View.GONE
             binding.check3dsError.visibility = View.VISIBLE
 
-            showResult(R.drawable.failed, R.string.pay_error_3ds_authentication_failed)
+            showResult(R.drawable.failed, msg)
         }
 
         override fun runtimeError(runtimeErrorEvent: RuntimeErrorEvent) {
-            Log.e(TAG, runtimeErrorEvent.errorMessage)
+            var msg = runtimeErrorEvent.errorMessage
+            if (msg.isEmpty()) {
+                msg = getString(R.string.pay_error_3ds_runtime_error)
+            }
+
+            Log.e(TAG, msg)
 
             binding.check3dsProgress.visibility = View.GONE
             binding.check3dsError.visibility = View.VISIBLE
 
-            showResult(R.drawable.failed, R.string.pay_error_3ds_authentication_failed)
+            showResult(R.drawable.failed, msg)
         }
-
     }
 
     private fun handle3DS1Response(response: GatewayMap) {
@@ -425,8 +445,8 @@ class ProcessPaymentActivity : AppCompatActivity() {
     }
 
     private fun handle3DS2Response(response: GatewayMap) {
-        val directoryServerId = response["authentication.3ds2.directoryServerId"] as String
-        val messageVersion = response["authentication.3ds2.messageVersion"] as String
+        val directoryServerId = response["authentication.3ds2.directoryServerId"] as String? ?: "MC000001"
+        val messageVersion = response["authentication.3ds2.messageVersion"] as String? ?: "2.1.0"
 
         threeDS2Transaction = mock3DS2Service.createTransaction(directoryServerId, messageVersion)
 
@@ -436,10 +456,9 @@ class ProcessPaymentActivity : AppCompatActivity() {
         val request = GatewayMap()
                 .set("authentication.3ds2.sdk.appId", requestParams.sdkAppID)
                 .set("authentication.3ds2.sdk.encryptedData", requestParams.deviceData)
-                .set("authentication.3ds2.sdk.ephemeralPublicKey ", requestParams.sdkEphemeralPublicKey)
+                .set("authentication.3ds2.sdk.ephemeralPublicKey", requestParams.sdkEphemeralPublicKey)
                 .set("authentication.3ds2.sdk.referenceNumber", requestParams.sdkReferenceNumber)
                 .set("authentication.3ds2.sdk.transactionId", requestParams.sdkTransactionID)
-
 
         gateway.authenticatePayer(sessionId, orderId, transactionId, apiVersion, request, AuthenticatePayerCallback())
     }
@@ -507,6 +526,6 @@ class ProcessPaymentActivity : AppCompatActivity() {
 
         // static for demo
         internal const val AMOUNT = "1.00"
-        internal const val CURRENCY = "USD"
+        internal const val CURRENCY = "AUD"
     }
 }
