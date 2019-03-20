@@ -210,7 +210,10 @@ class Gateway {
                 payload = payload.apply {
                     this["session.id"] = sessionId
                 },
-                headers = mutableMapOf("Authorization" to createAuthHeader(sessionId))
+                headers = mutableMapOf(
+                        "Authorization" to createAuthHeader(sessionId),
+                        "TNSI_TOGGLES_ON" to "Enable new 3DS API"
+                )
         )
     }
 
