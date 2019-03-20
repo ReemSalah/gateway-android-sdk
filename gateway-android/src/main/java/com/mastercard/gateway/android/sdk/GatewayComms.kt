@@ -18,12 +18,14 @@ package com.mastercard.gateway.android.sdk
 
 import android.os.Handler
 import com.google.gson.Gson
+import io.reactivex.Flowable
 import io.reactivex.Single
 import java.io.ByteArrayInputStream
 import java.net.URL
 import java.security.KeyStore
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import java.util.concurrent.TimeUnit
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
@@ -39,11 +41,23 @@ internal class GatewayComms {
 
         Thread {
             val m = handler.obtainMessage()
-            try {
-                m.obj = executeGatewayRequest(request)
-            } catch (e: Exception) {
-                m.obj = e
-            }
+
+            var retry = false
+            do {
+                try {
+                    retry = false
+                    m.obj = executeGatewayRequest(request)
+                } catch (e: GatewayException) {
+                    if (e.statusCode == 429) {
+                        retry = true
+                        Thread.sleep(DELAY_429)
+                    } else {
+                        m.obj = e
+                    }
+                } catch (e: Exception) {
+                    m.obj = e
+                }
+            } while (retry)
 
             handler.sendMessage(m)
         }.start()
@@ -51,6 +65,10 @@ internal class GatewayComms {
 
     internal fun runGatewayRequest(request: GatewayRequest): Single<GatewayMap> {
         return Single.fromCallable { executeGatewayRequest(request) }
+                .retryWhen { errors ->
+                    errors.takeWhile { it is GatewayException && it.statusCode == 429 }
+                            .flatMap { Flowable.timer(DELAY_429, TimeUnit.MILLISECONDS) }
+                }
     }
 
     // handler callback method when executing a request on a new thread
@@ -184,6 +202,7 @@ internal class GatewayComms {
         const val MIN_API_VERSION = 39
         const val CONNECTION_TIMEOUT = 15000
         const val READ_TIMEOUT = 60000
+        const val DELAY_429 = 2000L
         const val USER_AGENT = "Gateway-Android-SDK/" + BuildConfig.VERSION_NAME
         const val INTERMEDIATE_CA = "-----BEGIN CERTIFICATE-----\n" +
                 "MIIFAzCCA+ugAwIBAgIEUdNg7jANBgkqhkiG9w0BAQsFADCBvjELMAkGA1UEBhMC\n" +
