@@ -56,7 +56,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.8.2'
 
     // optional for rx java
-    optional 'io.reactivex.rxjava2:rxjava:2.2.5'
+    optional 'io.reactivex.rxjava2:rxjava:2.2.6'
 
     // optional for google pay
     optional 'androidx.legacy:legacy-support-v4:1.0.0'
