@@ -26,6 +26,7 @@ import java.security.KeyStore
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
@@ -42,22 +43,24 @@ internal class GatewayComms {
         Thread {
             val m = handler.obtainMessage()
 
-            var retry = false
-            do {
+            val attempts = AtomicLong()
+            while (true) {
                 try {
-                    retry = false
+                    attempts.incrementAndGet()
                     m.obj = executeGatewayRequest(request)
+                    break
                 } catch (e: GatewayException) {
-                    if (e.statusCode == 429) {
-                        retry = true
-                        Thread.sleep(DELAY_429)
+                    m.obj = e
+                    if (e.statusCode == 429 && attempts.get() < RETRY_429_ATTEMPTS) {
+                        Thread.sleep(attempts.get() * 1000)
                     } else {
-                        m.obj = e
+                        break
                     }
                 } catch (e: Exception) {
                     m.obj = e
+                    break
                 }
-            } while (retry)
+            }
 
             handler.sendMessage(m)
         }.start()
@@ -66,8 +69,9 @@ internal class GatewayComms {
     internal fun runGatewayRequest(request: GatewayRequest): Single<GatewayMap> {
         return Single.fromCallable { executeGatewayRequest(request) }
                 .retryWhen { errors ->
-                    errors.takeWhile { it is GatewayException && it.statusCode == 429 }
-                            .flatMap { Flowable.timer(DELAY_429, TimeUnit.MILLISECONDS) }
+                    val attempts = AtomicLong()
+                    errors.takeWhile { it is GatewayException && it.statusCode == 429 && attempts.getAndIncrement() < RETRY_429_ATTEMPTS }
+                            .flatMap { Flowable.timer(attempts.get(), TimeUnit.SECONDS) }
                 }
     }
 
@@ -202,7 +206,7 @@ internal class GatewayComms {
         const val MIN_API_VERSION = 39
         const val CONNECTION_TIMEOUT = 15000
         const val READ_TIMEOUT = 60000
-        const val DELAY_429 = 2000L
+        const val RETRY_429_ATTEMPTS = 10
         const val USER_AGENT = "Gateway-Android-SDK/" + BuildConfig.VERSION_NAME
         const val INTERMEDIATE_CA = "-----BEGIN CERTIFICATE-----\n" +
                 "MIIFAzCCA+ugAwIBAgIEUdNg7jANBgkqhkiG9w0BAQsFADCBvjELMAkGA1UEBhMC\n" +
