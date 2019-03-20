@@ -11,37 +11,34 @@ class ChallengeActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_TRANSACTION_ID = "com.mastercard.gateway.threeds.EXTRA_TRANSACTION_ID"
-        const val EXTRA_RECEIVER = "com.mastercard.gateway.threeds.EXTRA_RECEIVER"
     }
 
     lateinit var transactionID: String
-    lateinit var receiver: ChallengeStatusReceiver
     lateinit var binding: ActivityChallengeBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        transactionID = intent.getStringExtra(EXTRA_TRANSACTION_ID)
-        receiver = intent.getSerializableExtra(EXTRA_RECEIVER) as ChallengeStatusReceiver
-
         binding = DataBindingUtil.setContentView(this, R.layout.activity_challenge)
 
+        transactionID = intent.getStringExtra(EXTRA_TRANSACTION_ID)
+
         binding.buttonComplete.setOnClickListener {
-            receiver.completed(CompletionEvent(transactionID, binding.textCompletionStatus.text.toString()))
+            MockTransaction.currentStatusReceiver?.completed(CompletionEvent(transactionID, binding.textCompletionStatus.text.toString()))
             finish()
         }
 
         binding.buttonTimeout.setOnClickListener {
-            receiver.timedout()
+            MockTransaction.currentStatusReceiver?.timedout()
             finish()
         }
 
         binding.buttonProtocolError.setOnClickListener {
-            receiver.protocolError(ProtocolErrorEvent(ErrorMessage("some error code", "some component", binding.textProtocolErrorMessage.text.toString(), null, null, "2.1.0"), transactionID))
+            MockTransaction.currentStatusReceiver?.protocolError(ProtocolErrorEvent(ErrorMessage("some error code", "some component", binding.textProtocolErrorMessage.text.toString(), null, null, "2.1.0"), transactionID))
             finish()
         }
 
         binding.buttonRuntimeError.setOnClickListener {
-            receiver.runtimeError(RuntimeErrorEvent(binding.textRuntimeErrorCode.text.toString(), binding.textRuntimeErrorMessage.text.toString()))
+            MockTransaction.currentStatusReceiver?.runtimeError(RuntimeErrorEvent(binding.textRuntimeErrorCode.text.toString(), binding.textRuntimeErrorMessage.text.toString()))
             finish()
         }
     }
@@ -54,7 +51,7 @@ class ChallengeActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.menu_cancel -> {
-                receiver.cancelled()
+                MockTransaction.currentStatusReceiver?.cancelled()
                 finish()
                 true
             }

@@ -1,8 +1,6 @@
 package com.mastercard.gateway.threeds2
 
-import java.io.Serializable
-
-interface ChallengeStatusReceiver : Serializable {
+interface ChallengeStatusReceiver {
     fun completed(completionEvent: CompletionEvent)
     fun cancelled()
     fun timedout()
