@@ -16,6 +16,12 @@
 #   public *;
 #}
 
+-dontobfuscate
+
+-keep class com.msignia.** { *; }
+-keep class org.emvco.** { *; }
+
+
 # These lines needed for play services lib
 -keep class * extends java.util.ListResourceBundle {
     protected Object[][] getContents();

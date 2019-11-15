@@ -1,10 +1,16 @@
 buildscript {
-    ext.kotlin_version = '1.3.21'
+    ext.kotlin_version = '1.3.50'
 
     repositories {
 
         maven {
             url 'https://artifacts.mastercard.int/artifactory/maven-all'
+        }
+        maven {
+            url 'http://tools.labs.mastercard.com/artifactory/ext-release-local'
+        }
+        maven {
+            url 'http://tools.labs.mastercard.com/artifactory/ext-snapshot-local'
         }
 
         jcenter()
@@ -12,7 +18,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.3.2'
+        classpath 'com.android.tools.build:gradle:3.5.0'
         classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.7.5'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
         classpath 'org.jetbrains.dokka:dokka-android-gradle-plugin:0.9.17'
@@ -25,6 +31,12 @@ allprojects {
 
         maven {
             url 'https://artifacts.mastercard.int/artifactory/maven-all'
+        }
+        maven {
+            url 'http://tools.labs.mastercard.com/artifactory/ext-release-local'
+        }
+        maven {
+            url 'http://tools.labs.mastercard.com/artifactory/ext-snapshot-local'
         }
 
         jcenter()

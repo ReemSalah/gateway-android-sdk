@@ -55,7 +55,8 @@ class Gateway {
         ASIA_PACIFIC("ap-"),
         EUROPE("eu-"),
         NORTH_AMERICA("na-"),
-        MTF("test-")
+        MTF("test-"),
+        QA03("qa03.")
     }
 
     /**

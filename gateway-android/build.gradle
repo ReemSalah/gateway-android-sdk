@@ -1,6 +1,6 @@
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.dokka-android'
@@ -94,9 +94,11 @@ publishing {
             artifactId project.name
             version = libraryVersionName
 
-            artifact bundleReleaseAar
-            artifact dokkaJavadocsJar
-            artifact androidSourcesJar
+            afterEvaluate {
+                artifact bundleReleaseAar
+                artifact dokkaJavadocsJar
+                artifact androidSourcesJar
+            }
 
             pom.withXml {
                 def root = asNode()
