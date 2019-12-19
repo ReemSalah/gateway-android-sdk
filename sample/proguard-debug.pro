@@ -18,9 +18,13 @@
 
 -dontobfuscate
 
--keep class com.msignia.** { *; }
--keep class org.emvco.** { *; }
-
+-keep class com.ndsthreeds.android.sdk.** { *; }
+#-keep class org.spongycastle.** { *; }
+-keep class org.spongycastle.jcajce.provider.asymmetric.RSA$Mappings** { *; }
+-keep class org.spongycastle.jcajce.provider.asymmetric.rsa.PSSSignatureSpi$SHA256withRSA** { *; }
+-keep class org.spongycastle.jcajce.provider.symmetric.AES$AlgParamsGCM**
+-keep class org.spongycastle.jcajce.provider.symmetric.AES$ECB**
+-keep class org.spongycastle.jcajce.provider.symmetric.AES$Mappings**
 
 # These lines needed for play services lib
 -keep class * extends java.util.ListResourceBundle {

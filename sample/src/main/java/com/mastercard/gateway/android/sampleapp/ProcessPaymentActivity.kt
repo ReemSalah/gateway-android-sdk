@@ -1,7 +1,9 @@
 package com.mastercard.gateway.android.sampleapp
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Paint
 import android.os.Bundle
 import android.util.Log
@@ -17,13 +19,17 @@ import com.mastercard.gateway.android.sdk.GatewayCallback
 import com.mastercard.gateway.android.sdk.GatewayMap
 import com.nds.threeds.core.*
 import java.util.*
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import org.emvco.threeds.core.ChallengeParameters
 
 
-class ProcessPaymentActivity : AppCompatActivity() {
+class ProcessPaymentActivity : AppCompatActivity(), ActivityCompat.OnRequestPermissionsResultCallback {
 
     companion object {
         internal val TAG = ProcessPaymentActivity::class.java.simpleName
         internal const val REQUEST_CARD_INFO = 100
+        internal const val REQUEST_READ_PHONE_STATE = 1000
 
         // static for demo
         internal const val AMOUNT = "1.00"
@@ -47,6 +53,8 @@ class ProcessPaymentActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_process_payment)
+
         binding = DataBindingUtil.setContentView(this, R.layout.activity_process_payment)
 
         // init api controller
@@ -79,7 +87,14 @@ class ProcessPaymentActivity : AppCompatActivity() {
         binding.doneButton.setOnClickListener { finish() }
 
         initUI()
-        init3DS2SDK()
+
+        val permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE)
+
+        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_PHONE_STATE), REQUEST_READ_PHONE_STATE)
+        } else {
+            init3DS2SDK()
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -129,6 +144,17 @@ class ProcessPaymentActivity : AppCompatActivity() {
         }
 
         super.onActivityResult(requestCode, resultCode, data)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        when (requestCode) {
+            REQUEST_READ_PHONE_STATE -> if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                init3DS2SDK()
+            }
+            else -> {
+            }
+        }
+
     }
 
     internal fun initUI() {
@@ -319,7 +345,7 @@ class ProcessPaymentActivity : AppCompatActivity() {
 
     internal inner class InitiateAuthenticationCallback : GatewayCallback {
         override fun onSuccess(response: GatewayMap) {
-            Log.i(TAG, "Successfully initiated Authentication")
+            Log.i(TAG, "Initiated Authentication Complete")
 
             handle3DS2Response(response) // TEMP hotwire
 
@@ -344,7 +370,7 @@ class ProcessPaymentActivity : AppCompatActivity() {
 
     internal inner class AuthenticatePayerCallback : GatewayCallback {
         override fun onSuccess(response: GatewayMap) {
-            Log.i(TAG, "Successfully initiated Authentication")
+            Log.i(TAG, "Authenticate Payer Complete")
 
             val acsTransactionId = response["authentication.3ds2.acsTransactionId"] as String?
                     ?: "acTransactionID"
@@ -356,7 +382,9 @@ class ProcessPaymentActivity : AppCompatActivity() {
             val timeout = response["authentication.3ds2.sdk.timeout"] as Int? ?: 0
 
 
-//            val challengeParameters = ChallengeParameters(threeDSTransaction.getAuthenticationRequestParameters().sdkTransactionID,
+
+
+//            val challengeParameters = EMVChallengeParameters(threeDSTransaction.getAuthenticationRequestParameters().sdkTransactionID,
 //                    acsTransactionId,
 //                    acsRefNumber,
 //                    acsSignedContent,
@@ -416,7 +444,7 @@ class ProcessPaymentActivity : AppCompatActivity() {
         val requestParams = threeDSTransaction.authenticationRequestParameters
 
         // TODO this is just a test value
-        val referenceNumber = "SDKREF00000001"
+        val referenceNumber = "SDKREF00000000000000000000000001"
 
         // build the gateway request
         val request = GatewayMap()

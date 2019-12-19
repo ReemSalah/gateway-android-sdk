@@ -3,8 +3,11 @@ buildscript {
 
     repositories {
 
+//        maven {
+//            url 'https://artifacts.mastercard.int/artifactory/maven-all'
+//        }
         maven {
-            url 'https://artifacts.mastercard.int/artifactory/maven-all'
+            url 'http://10.157.193.70:8888/artifactory/maven-all'
         }
         maven {
             url 'http://tools.labs.mastercard.com/artifactory/ext-release-local'
@@ -13,7 +16,7 @@ buildscript {
             url 'http://tools.labs.mastercard.com/artifactory/ext-snapshot-local'
         }
 
-        jcenter()
+//        jcenter()
         google()
     }
 
@@ -23,14 +26,18 @@ buildscript {
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
         classpath 'org.jetbrains.dokka:dokka-android-gradle-plugin:0.9.17'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.getkeepsafe.dexcount:dexcount-gradle-plugin:1.0.0'
     }
 }
 
 allprojects {
     repositories {
 
+//        maven {
+//            url 'https://artifacts.mastercard.int/artifactory/maven-all'
+//        }
         maven {
-            url 'https://artifacts.mastercard.int/artifactory/maven-all'
+            url 'http://10.157.193.70:8888/artifactory/maven-all'
         }
         maven {
             url 'http://tools.labs.mastercard.com/artifactory/ext-release-local'
@@ -39,7 +46,7 @@ allprojects {
             url 'http://tools.labs.mastercard.com/artifactory/ext-snapshot-local'
         }
 
-        jcenter()
+//        jcenter()
         google()
     }
 }

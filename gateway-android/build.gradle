@@ -1,6 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'kotlin-kapt'
 apply plugin: 'com.jfrog.bintray'
 apply plugin: 'maven-publish'
 apply plugin: 'org.jetbrains.dokka-android'
@@ -51,8 +52,8 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
     // required
-    implementation 'androidx.appcompat:appcompat:1.1.0-alpha02'
-    implementation 'com.google.android.material:material:1.1.0-alpha04'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.google.android.material:material:1.2.0-alpha01'
     implementation 'com.google.code.gson:gson:2.8.2'
 
     // optional for rx java
@@ -60,9 +61,9 @@ dependencies {
 
     // optional for google pay
     optional 'androidx.legacy:legacy-support-v4:1.0.0'
-    optional 'com.google.android.gms:play-services-wallet:16.0.1'
+    optional 'com.google.android.gms:play-services-wallet:18.0.0'
 
-    compileOnly 'androidx.annotation:annotation:1.0.2'
+    compileOnly 'androidx.annotation:annotation:1.1.0'
 
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.robolectric:robolectric:4.2'

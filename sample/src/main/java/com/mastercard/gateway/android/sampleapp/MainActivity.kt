@@ -8,14 +8,21 @@ import androidx.appcompat.app.AppCompatActivity
 import android.text.Editable
 import android.text.TextUtils
 import android.text.TextWatcher
+import android.util.Log
 
 import com.mastercard.gateway.android.sampleapp.databinding.ActivityMainBinding
 import com.mastercard.gateway.android.sdk.Gateway
+import com.nds.threeds.core.EMVConfigParameters
+import com.nds.threeds.core.EMVUiCustomization
+import com.nds.threeds.core.ThreeDSInitializationCallback
+import com.nds.threeds.core.ThreeDSSDK
 
 class MainActivity : AppCompatActivity() {
 
     internal lateinit var binding: ActivityMainBinding
     internal var textChangeListener = TextChangeListener()
+
+    internal lateinit var threeDSSDK: ThreeDSSDK
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +54,24 @@ class MainActivity : AppCompatActivity() {
         binding.processPaymentButton.setOnClickListener { v -> goTo(ProcessPaymentActivity::class.java) }
 
         enableButtons()
+
+
+        threeDSSDK = ThreeDSSDK.Builder()
+                .configParameters(EMVConfigParameters())
+                .uiCustomization(EMVUiCustomization())
+                .build(this) // this == activity
+
+        threeDSSDK.initialize(object : ThreeDSInitializationCallback {
+            // 3DS SDK successfully initialized
+            override fun success() {
+                Log.d(MainActivity::class.java.simpleName, "NuData initialization complete")
+            }
+
+            // 3DS SDK failed to initialize
+            override fun error(e: Exception?) {
+                Log.e(MainActivity::class.java.simpleName, "NuData initialization error", e)
+            }
+        })
     }
 
     internal fun goTo(klass: Class<*>) {
