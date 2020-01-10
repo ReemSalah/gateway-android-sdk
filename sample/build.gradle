@@ -60,7 +60,7 @@ dependencies {
     implementation project(':gateway-android')
 //    implementation 'com.mastercard.gateway:gateway-android:1.1.1'
 
-    implementation 'com.nds.threeds:core:1.1.4'
+    implementation 'com.nds.threeds:core:1.1.6'
     implementation 'com.nds.threeds:threedssdk-release:1.1.16'
 
     implementation 'com.google.code.gson:gson:2.8.2'

@@ -193,6 +193,7 @@ class ProcessPaymentActivity : AppCompatActivity(), ActivityCompat.OnRequestPerm
                 .uiCustomization(EMVUiCustomization())
                 .build(this) // this == activity
 
+
         threeDSSDK.initialize(object : ThreeDSInitializationCallback {
             // 3DS SDK successfully initialized
             override fun success() {
